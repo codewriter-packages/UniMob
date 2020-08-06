@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace UniMob
@@ -23,6 +24,12 @@ namespace UniMob
         public bool KeepAlive => _keepAlive;
         public bool IsActive => _active;
         public int SubscribersCount => _subscribers?.Count ?? 0;
+
+        internal bool Reaping
+        {
+            get => _reaping;
+            set => _reaping = value;
+        }
 
         public enum AtomState
         {
@@ -74,7 +81,7 @@ namespace UniMob
                 }
                 catch (Exception e)
                 {
-                    Zone.Current.HandleUncaughtException(e);
+                    Debug.LogException(e);
                 }
             }
 
@@ -105,7 +112,7 @@ namespace UniMob
                 }
                 catch (Exception e)
                 {
-                    Zone.Current.HandleUncaughtException(e);
+                    Debug.LogException(e);
                 }
             }
 
@@ -174,11 +181,11 @@ namespace UniMob
             {
                 if (KeepAlive)
                 {
-                    Actualize(this);
+                    AtomScheduler.Actualize(this);
                 }
                 else
                 {
-                    Reap(this);
+                    AtomScheduler.Reap(this);
                 }
             }
         }
@@ -206,7 +213,7 @@ namespace UniMob
             if (_subscribers == null)
             {
                 CreateList(out _subscribers);
-                Unreap(this);
+                AtomScheduler.Unreap(this);
             }
 
             _subscribers.Add(subscriber);
@@ -225,7 +232,7 @@ namespace UniMob
 
                 if (!KeepAlive)
                 {
-                    Reap(this);
+                    AtomScheduler.Reap(this);
                 }
             }
         }
@@ -251,84 +258,7 @@ namespace UniMob
         }
 
         internal static AtomBase Stack;
-
-        private static readonly Action DoSyncAction = DoSync;
-
-        private static Queue<AtomBase> _updatingCurrentFrame = new Queue<AtomBase>();
-        private static Queue<AtomBase> _updatingNextFrame = new Queue<AtomBase>();
-        private static readonly Queue<AtomBase> Reaping = new Queue<AtomBase>();
-        private static IZone _scheduled;
-
-        internal static void Actualize(AtomBase atom)
-        {
-            _updatingNextFrame.Enqueue(atom);
-            Schedule();
-        }
-
-        private static void Reap(AtomBase atom)
-        {
-            atom._reaping = true;
-            Reaping.Enqueue(atom);
-            Schedule();
-        }
-
-        private static void Unreap(AtomBase atom)
-        {
-            atom._reaping = false;
-        }
-
-        private static void Schedule()
-        {
-            if (_scheduled == Zone.Current)
-                return;
-
-            Zone.Current.Invoke(DoSyncAction);
-
-            _scheduled = Zone.Current;
-        }
-
-        private static readonly CustomSampler ProfilerSampler = CustomSampler.Create("UniMob.Sync");
-
-        private static void DoSync()
-        {
-            if (_scheduled == null)
-                return;
-
-            _scheduled = null;
-
-            ProfilerSampler.Begin();
-
-            Sync();
-
-            ProfilerSampler.End();
-        }
-
-        private static void Sync()
-        {
-            var toSwap = _updatingCurrentFrame;
-            _updatingCurrentFrame = _updatingNextFrame;
-            _updatingNextFrame = toSwap;
-            
-            while (_updatingCurrentFrame.Count > 0)
-            {
-                var atom = _updatingCurrentFrame.Dequeue();
-
-                if (atom.IsActive && !atom._reaping && atom.State != AtomState.Actual)
-                {
-                    atom.Actualize();
-                }
-            }
-
-            while (Reaping.Count > 0)
-            {
-                var atom = Reaping.Dequeue();
-                if (atom._reaping && atom._subscribers == null)
-                {
-                    atom.Deactivate();
-                }
-            }
-        }
-
+        
         private static readonly Stack<List<AtomBase>> ListPool = new Stack<List<AtomBase>>();
 
         private static void CreateList(out List<AtomBase> list)

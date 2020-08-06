@@ -6,7 +6,7 @@ namespace UniMob.Tests
     public class AtomGcTests
     {
         [Test]
-        public void NoSubscribed() => TestZone.Run(tick =>
+        public void NoSubscribed()
         {
             var source = Atom.Value(1);
             var middle = Atom.Computed(() => source.Value + 1);
@@ -17,10 +17,10 @@ namespace UniMob.Tests
             Assert.AreEqual(0, source.SubscribersCount());
             Assert.AreEqual(0, middle.SubscribersCount());
             Assert.AreEqual(0, target.SubscribersCount());
-        });
+        }
 
         [Test]
-        public void AutoUnsubscribed_Reaction() => TestZone.Run(tick =>
+        public void AutoUnsubscribed_Reaction()
         {
             var source = Atom.Value(1);
             var middle = Atom.Computed(() => source.Value + 1);
@@ -33,15 +33,15 @@ namespace UniMob.Tests
             Assert.AreEqual(1, target.SubscribersCount());
 
             run.Dispose();
-            tick(0);
+            AtomTestUtil.Sync();
 
             Assert.AreEqual(0, source.SubscribersCount());
             Assert.AreEqual(0, middle.SubscribersCount());
             Assert.AreEqual(0, target.SubscribersCount());
-        });
+        }
 
         [Test]
-        public void KeepAliveComputed() => TestZone.Run(tick =>
+        public void KeepAliveComputed()
         {
             var source = Atom.Value(1);
             var middle = Atom.Computed(() => source.Value + 1, keepAlive: true);
@@ -54,20 +54,20 @@ namespace UniMob.Tests
             Assert.AreEqual(1, target.SubscribersCount());
 
             run.Dispose();
-            tick(0);
+            AtomTestUtil.Sync();
 
             Assert.AreEqual(1, source.SubscribersCount());
             Assert.AreEqual(0, middle.SubscribersCount());
             Assert.AreEqual(0, target.SubscribersCount());
 
             middle.Deactivate();
-            tick(0);
+            AtomTestUtil.Sync();
 
             Assert.AreEqual(0, source.SubscribersCount());
-        });
+        }
 
         [Test]
-        public void AutoUnsubscribed_MultiReaction() => TestZone.Run(tick =>
+        public void AutoUnsubscribed_MultiReaction()
         {
             var source = Atom.Value(1);
             var middle = Atom.Computed(() => source.Value + 1);
@@ -80,14 +80,14 @@ namespace UniMob.Tests
             Assert.AreEqual(2, middle.SubscribersCount());
 
             run1.Dispose();
-            tick(0);
+            AtomTestUtil.Sync();
 
             Assert.AreEqual(1, middle.SubscribersCount());
 
             run2.Dispose();
-            tick(0);
+            AtomTestUtil.Sync();
 
             Assert.AreEqual(0, middle.SubscribersCount());
-        });
+        }
     }
 }

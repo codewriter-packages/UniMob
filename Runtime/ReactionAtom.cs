@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace UniMob
 {
@@ -12,7 +13,7 @@ namespace UniMob
             : base(true, null, null)
         {
             _reaction = reaction ?? throw new ArgumentNullException(nameof(reaction));
-            _exceptionHandler = exceptionHandler ?? Zone.Current.HandleUncaughtException;
+            _exceptionHandler = exceptionHandler ?? Debug.LogException;
         }
 
         public void Dispose()
