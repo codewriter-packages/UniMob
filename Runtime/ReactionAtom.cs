@@ -10,7 +10,7 @@ namespace UniMob
         private readonly string _debugName;
 
         internal ReactionAtom(Action reaction, Action<Exception> exceptionHandler = null, string debugName = null)
-            : base(true, null, null)
+            : base(true, null)
         {
             _reaction = reaction ?? throw new ArgumentNullException(nameof(reaction));
             _exceptionHandler = exceptionHandler ?? Debug.LogException;

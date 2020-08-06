@@ -9,8 +9,7 @@ namespace UniMob
     public abstract class AtomBase : IEquatable<AtomBase>
     {
         private readonly bool _keepAlive;
-        private readonly Action _onActive;
-        private readonly Action _onInactive;
+        private readonly IAtomCallbacks _callbacks;
         private List<AtomBase> _children;
         private List<AtomBase> _subscribers;
         private bool _active;
@@ -39,11 +38,10 @@ namespace UniMob
             Actual,
         }
 
-        protected AtomBase(bool keepAlive, Action onActive, Action onInactive)
+        protected AtomBase(bool keepAlive, IAtomCallbacks callbacks)
         {
             _keepAlive = keepAlive;
-            _onActive = onActive;
-            _onInactive = onInactive;
+            _callbacks = callbacks;
         }
 
         public bool Equals(AtomBase other)
@@ -74,15 +72,7 @@ namespace UniMob
             if (_active)
             {
                 _active = false;
-
-                try
-                {
-                    _onInactive?.Invoke();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogException(e);
-                }
+                _callbacks?.OnInactive();
             }
 
             State = AtomState.Obsolete;
@@ -105,15 +95,7 @@ namespace UniMob
             if (!_active)
             {
                 _active = true;
-
-                try
-                {
-                    _onActive?.Invoke();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogException(e);
-                }
+                _callbacks?.OnActive();
             }
 
             if (!force && State == AtomState.Checking)
@@ -258,7 +240,7 @@ namespace UniMob
         }
 
         internal static AtomBase Stack;
-        
+
         private static readonly Stack<List<AtomBase>> ListPool = new Stack<List<AtomBase>>();
 
         private static void CreateList(out List<AtomBase> list)

@@ -19,8 +19,11 @@ namespace UniMob.Tests
                     runs += "R";
                     return 1;
                 },
-                onActive: () => activation += "A",
-                onInactive: () => activation += "D");
+                callbacks: new ActionAtomCallbacks(
+                    onActive: () => activation += "A",
+                    onInactive: () => activation += "D"
+                )
+            );
 
             atom.Get();
             atom.Get();
@@ -37,8 +40,11 @@ namespace UniMob.Tests
             var atom = Atom.Computed(
                 pull: () => 1,
                 keepAlive: true,
-                onActive: () => activation += "A",
-                onInactive: () => activation += "D");
+                callbacks: new ActionAtomCallbacks(
+                    onActive: () => activation += "A",
+                    onInactive: () => activation += "D"
+                )
+            );
 
             Assert.AreEqual("", activation);
 
@@ -56,8 +62,11 @@ namespace UniMob.Tests
 
             var atom = Atom.Computed(
                 pull: () => 1,
-                onActive: () => activation += "A",
-                onInactive: () => activation += "D");
+                callbacks: new ActionAtomCallbacks(
+                    onActive: () => activation += "A",
+                    onInactive: () => activation += "D"
+                )
+            );
 
             var listener = Atom.Computed(() => atom.Value + 1, keepAlive: true);
 
@@ -80,18 +89,27 @@ namespace UniMob.Tests
 
             var source = Atom.Value(
                 0,
-                onActive: () => activation += "S",
-                onInactive: () => activation += "s");
+                callbacks: new ActionAtomCallbacks(
+                    onActive: () => activation += "S",
+                    onInactive: () => activation += "s"
+                )
+            );
 
             var middle = Atom.Computed(
                 () => source.Value + 1,
-                onActive: () => activation += "M",
-                onInactive: () => activation += "m");
+                callbacks: new ActionAtomCallbacks(
+                    onActive: () => activation += "M",
+                    onInactive: () => activation += "m"
+                )
+            );
 
             var target = Atom.Computed(
                 () => middle.Value + 1,
-                onActive: () => activation += "T",
-                onInactive: () => activation += "t");
+                callbacks: new ActionAtomCallbacks(
+                    onActive: () => activation += "T",
+                    onInactive: () => activation += "t"
+                )
+            );
 
             target.Get();
             Assert.AreEqual("", activation);
@@ -113,8 +131,11 @@ namespace UniMob.Tests
 
             var activationSource = Atom.Computed(
                 pull: () => 1,
-                onActive: () => activation += "A",
-                onInactive: () => activation += "D");
+                callbacks: new ActionAtomCallbacks(
+                    onActive: () => activation += "A",
+                    onInactive: () => activation += "D"
+                )
+            );
 
             var modifiedSource = Atom.Value(1);
             var listener = Atom.Computed(() => activationSource.Value + modifiedSource.Value);
@@ -139,8 +160,11 @@ namespace UniMob.Tests
             var activation = "";
 
             var atom = Atom.Value(1,
-                onActive: () => activation += "A",
-                onInactive: () => activation += "D");
+                callbacks: new ActionAtomCallbacks(
+                    onActive: () => activation += "A",
+                    onInactive: () => activation += "D"
+                )
+            );
 
             Assert.AreEqual("", activation);
 

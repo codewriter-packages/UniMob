@@ -22,10 +22,9 @@ namespace UniMob
             AtomPush<T> push = null,
             bool keepAlive = false,
             bool requiresReaction = false,
-            Action onActive = null,
-            Action onInactive = null,
+            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
-            : base(keepAlive, onActive, onInactive)
+            : base(keepAlive, callbacks)
         {
             _pull = pull ?? throw new ArgumentNullException(nameof(pull));
             _push = push;

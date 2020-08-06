@@ -7,22 +7,20 @@ namespace UniMob
     {
         public static MutableAtom<T> Value<T>(
             T value,
-            Action onActive = null,
-            Action onInactive = null,
+            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
         {
-            return new ValueAtom<T>(value, onActive, onInactive, comparer);
+            return new ValueAtom<T>(value, callbacks, comparer);
         }
 
         public static Atom<T> Computed<T>(
             AtomPull<T> pull,
             bool keepAlive = false,
             bool requiresReaction = false,
-            Action onActive = null,
-            Action onInactive = null,
+            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
         {
-            return new ComputedAtom<T>(pull, null, keepAlive, requiresReaction, onActive, onInactive, comparer);
+            return new ComputedAtom<T>(pull, null, keepAlive, requiresReaction, callbacks, comparer);
         }
 
         public static MutableAtom<T> Computed<T>(
@@ -30,11 +28,10 @@ namespace UniMob
             AtomPush<T> push,
             bool keepAlive = false,
             bool requiresReaction = false,
-            Action onActive = null,
-            Action onInactive = null,
+            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
         {
-            return new ComputedAtom<T>(pull, push, keepAlive, requiresReaction, onActive, onInactive, comparer);
+            return new ComputedAtom<T>(pull, push, keepAlive, requiresReaction, callbacks, comparer);
         }
 
         public static IDisposable Reaction<T>(

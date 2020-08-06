@@ -10,10 +10,9 @@ namespace UniMob
 
         internal ValueAtom(
             T value,
-            Action onActive = null,
-            Action onInactive = null,
+            IAtomCallbacks callbacks,
             IEqualityComparer<T> comparer = null)
-            : base(false, onActive, onInactive)
+            : base(false, callbacks)
         {
             _value = value;
             _comparer = comparer ?? EqualityComparer<T>.Default;
