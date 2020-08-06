@@ -49,7 +49,7 @@ namespace UniMob.Editor.Weaver
             _atomPullCtor = _module.ImportReference(_atomPullDef.Methods.Single(ConstructorFilter));
             _atomPushCtor = _module.ImportReference(_atomPushDef.Methods.Single(ConstructorFilter));
 
-            bool ComputedMethodFilter(MethodDefinition m) => m.Name == ComputedName && m.Parameters.Count == 7;
+            bool ComputedMethodFilter(MethodDefinition m) => m.Name == ComputedName && m.Parameters.Count == 6;
             _atomFactoryComputed = _module.ImportReference(_atomFactoryDef.Methods.Single(ComputedMethodFilter));
 
             bool dirty = false;
@@ -222,8 +222,7 @@ namespace UniMob.Editor.Weaver
 
                 proc.Append(proc.Create(OpCodes.Ldc_I4_0)); //keepAlive = false
                 proc.Append(proc.Create(OpCodes.Ldc_I4_0)); //requireReaction = false
-                proc.Append(proc.Create(OpCodes.Ldnull)); //onActive = null
-                proc.Append(proc.Create(OpCodes.Ldnull)); //onInactive = null
+                proc.Append(proc.Create(OpCodes.Ldnull)); //callbacks = null
                 proc.Append(proc.Create(OpCodes.Ldnull)); //comparer = null
 
                 //invoke Atom.Computed(pull, push, keepAlive, requiredReaction, onActive, onInactive, comparer)
