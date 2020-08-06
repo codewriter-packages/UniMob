@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using UnityEngine.Profiling;
 
 namespace UniMob
 {
@@ -286,7 +287,7 @@ namespace UniMob
             _scheduled = Zone.Current;
         }
 
-        private static readonly PerfWatcher SyncPerf = new PerfWatcher("UniMob.Atom.Sync");
+        private static readonly CustomSampler ProfilerSampler = CustomSampler.Create("UniMob.Sync");
 
         private static void DoSync()
         {
@@ -295,10 +296,11 @@ namespace UniMob
 
             _scheduled = null;
 
-            using (SyncPerf.Watch())
-            {
-                Sync();
-            }
+            ProfilerSampler.Begin();
+
+            Sync();
+
+            ProfilerSampler.End();
         }
 
         private static void Sync()
