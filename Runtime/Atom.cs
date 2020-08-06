@@ -10,7 +10,7 @@ namespace UniMob
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
         {
-            return new ValueAtom<T>(value, callbacks, comparer);
+            return new ValueAtom<T>(null, value, callbacks, comparer);
         }
 
         public static Atom<T> Computed<T>(
@@ -20,7 +20,7 @@ namespace UniMob
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
         {
-            return new ComputedAtom<T>(pull, null, keepAlive, requiresReaction, callbacks, comparer);
+            return new ComputedAtom<T>(null, pull, null, keepAlive, requiresReaction, callbacks, comparer);
         }
 
         public static MutableAtom<T> Computed<T>(
@@ -31,7 +31,7 @@ namespace UniMob
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
         {
-            return new ComputedAtom<T>(pull, push, keepAlive, requiresReaction, callbacks, comparer);
+            return new ComputedAtom<T>(null, pull, push, keepAlive, requiresReaction, callbacks, comparer);
         }
 
         public static IDisposable Reaction<T>(
@@ -45,7 +45,7 @@ namespace UniMob
             bool firstRun = true;
 
             ReactionAtom atom = null;
-            atom = new ReactionAtom(() =>
+            atom = new ReactionAtom(null, () =>
             {
                 var value = valueAtom.Value;
 
@@ -80,7 +80,7 @@ namespace UniMob
 
         public static IDisposable AutoRun(Action reaction, Action<Exception> exceptionHandler = null)
         {
-            var atom = new ReactionAtom(reaction, exceptionHandler);
+            var atom = new ReactionAtom(null, reaction, exceptionHandler);
             atom.Get();
             return atom;
         }

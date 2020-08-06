@@ -8,6 +8,7 @@ namespace UniMob
 {
     public abstract class AtomBase : IEquatable<AtomBase>
     {
+        private readonly string _debugName;
         private readonly bool _keepAlive;
         private readonly IAtomCallbacks _callbacks;
         private List<AtomBase> _children;
@@ -38,8 +39,9 @@ namespace UniMob
             Actual,
         }
 
-        protected AtomBase(bool keepAlive, IAtomCallbacks callbacks)
+        protected AtomBase(string debugName, bool keepAlive, IAtomCallbacks callbacks)
         {
+            _debugName = debugName;
             _keepAlive = keepAlive;
             _callbacks = callbacks;
         }
@@ -237,6 +239,11 @@ namespace UniMob
                 AddSubscriber(parent);
                 parent.AddChildren(this);
             }
+        }
+
+        public override string ToString()
+        {
+            return _debugName ?? "[Anonymous]";
         }
 
         internal static AtomBase Stack;

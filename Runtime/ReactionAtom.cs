@@ -9,8 +9,8 @@ namespace UniMob
         private readonly Action<Exception> _exceptionHandler;
         private readonly string _debugName;
 
-        internal ReactionAtom(Action reaction, Action<Exception> exceptionHandler = null, string debugName = null)
-            : base(true, null)
+        internal ReactionAtom(string debugName, Action reaction, Action<Exception> exceptionHandler = null)
+            : base(debugName, true, null)
         {
             _reaction = reaction ?? throw new ArgumentNullException(nameof(reaction));
             _exceptionHandler = exceptionHandler ?? Debug.LogException;
@@ -38,11 +38,6 @@ namespace UniMob
             {
                 _exceptionHandler(exception);
             }
-        }
-
-        public override string ToString()
-        {
-            return "[ReactionAtom]";
         }
     }
 }

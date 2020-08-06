@@ -9,10 +9,11 @@ namespace UniMob
         private T _value;
 
         internal ValueAtom(
+            string debugName,
             T value,
             IAtomCallbacks callbacks,
             IEqualityComparer<T> comparer = null)
-            : base(false, callbacks)
+            : base(debugName, false, callbacks)
         {
             _value = value;
             _comparer = comparer ?? EqualityComparer<T>.Default;
@@ -61,11 +62,6 @@ namespace UniMob
         public void Invalidate()
         {
             ObsoleteSubscribers();
-        }
-
-        public override string ToString()
-        {
-            return Convert.ToString(_value);
         }
     }
 }

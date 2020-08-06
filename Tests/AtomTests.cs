@@ -318,6 +318,7 @@ namespace UniMob.Tests
             var stack = new Stack<Exception>();
 
             var reaction = new ReactionAtom(
+                debugName: null,
                 reaction: () => middle.Get(),
                 exceptionHandler: ex => stack.Push(ex));
 

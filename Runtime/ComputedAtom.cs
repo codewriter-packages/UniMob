@@ -18,13 +18,14 @@ namespace UniMob
         private bool _isRunningSetter;
 
         internal ComputedAtom(
+            string debugName,
             [NotNull] AtomPull<T> pull,
             AtomPush<T> push = null,
             bool keepAlive = false,
             bool requiresReaction = false,
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
-            : base(keepAlive, callbacks)
+            : base(debugName, keepAlive, callbacks)
         {
             _pull = pull ?? throw new ArgumentNullException(nameof(pull));
             _push = push;
@@ -151,16 +152,6 @@ namespace UniMob
             _exception = null;
 
             ObsoleteSubscribers();
-        }
-
-        public override string ToString()
-        {
-            if (_exception != null)
-            {
-                return _exception.SourceException.ToString();
-            }
-
-            return _hasCache ? Convert.ToString(_cache) : "[undefined]";
         }
 
         private void WarnAboutUnTrackedRead()
