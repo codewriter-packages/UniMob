@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 
 namespace UniMob
 {
-    public class ComputedAtom<T> : AtomBase, MutableAtom<T>
+    public sealed class ComputedAtom<T> : AtomBase, MutableAtom<T>
     {
         private readonly IEqualityComparer<T> _comparer;
         private readonly AtomPull<T> _pull;
@@ -15,7 +15,15 @@ namespace UniMob
         private bool _hasCache;
         private T _cache;
         private ExceptionDispatchInfo _exception;
-        private bool _isRunningSetter;
+        private bool _nextDirectEvaluate;
+
+        // for CodeGen
+        public ComputedAtom(
+            string debugName,
+            AtomPull<T> pull)
+            : this(debugName, pull, null)
+        {
+        }
 
         internal ComputedAtom(
             string debugName,
@@ -33,6 +41,18 @@ namespace UniMob
             _requiresReaction = requiresReaction;
         }
 
+        // for CodeGen
+        public bool DirectEvaluate()
+        {
+            if (_nextDirectEvaluate)
+            {
+                _nextDirectEvaluate = false;
+                return true;
+            }
+
+            return false;
+        }
+
         public T Value
         {
             get
@@ -42,7 +62,7 @@ namespace UniMob
                     throw new CyclicAtomDependencyException(this);
                 }
 
-                if (!IsActive && Stack == null && !KeepAlive)
+                if (!IsActive && Stack.Peek() == null && !KeepAlive)
                 {
                     WarnAboutUnTrackedRead();
 
@@ -50,11 +70,13 @@ namespace UniMob
                     try
                     {
                         State = AtomState.Pulling;
+                        _nextDirectEvaluate = true;
                         return _pull();
                     }
                     finally
                     {
                         State = oldState;
+                        _nextDirectEvaluate = false;
                     }
                 }
 
@@ -73,33 +95,15 @@ namespace UniMob
                 if (_push == null)
                     throw new InvalidOperationException("It is not possible to assign a new value to a readonly Atom");
 
-                if (_isRunningSetter)
+                using (Atom.NoWatch)
                 {
-                    var message = "The setter of MutableAtom is trying to update itself. " +
-                                  "Did you intend to invoke Atom.Push(..), instead of the setter?";
-                    throw new InvalidOperationException(message);
-                }
+                    if (_hasCache && _comparer.Equals(value, _cache))
+                        return;
 
-                try
-                {
-                    using (Atom.NoWatch)
-                    {
-                        if (_hasCache && _comparer.Equals(value, _cache))
-                            return;
+                    Invalidate();
 
-                        State = AtomState.Obsolete;
-                        _cache = default;
-                        _exception = null;
-                        _hasCache = false;
 
-                        _isRunningSetter = true;
-                        _push(value);
-                    }
-                }
-                finally
-                {
-                    _isRunningSetter = false;
-                    ObsoleteSubscribers();
+                    _push(value);
                 }
             }
         }
@@ -117,6 +121,9 @@ namespace UniMob
         {
             try
             {
+                State = AtomState.Pulling;
+                _nextDirectEvaluate = true;
+
                 var value = _pull();
 
                 using (Atom.NoWatch)
@@ -138,6 +145,7 @@ namespace UniMob
             finally
             {
                 State = AtomState.Actual;
+                _nextDirectEvaluate = false;
             }
 
             ObsoleteSubscribers();

@@ -85,23 +85,29 @@ namespace UniMob
             return atom;
         }
 
-        public static WatchScope NoWatch => new WatchScope(null);
+        private static readonly WatchScope NoWatchInstance = new WatchScope();
 
-        public static AtomBase CurrentScope => AtomBase.Stack;
-
-        public readonly struct WatchScope : IDisposable
+        public static IDisposable NoWatch
         {
-            private readonly AtomBase _parent;
-
-            internal WatchScope(AtomBase self)
+            get
             {
-                _parent = AtomBase.Stack;
-                AtomBase.Stack = self;
+                NoWatchInstance.Enter();
+                return NoWatchInstance;
+            }
+        }
+
+        public static AtomBase CurrentScope => AtomBase.Stack.Peek();
+
+        private class WatchScope : IDisposable
+        {
+            public void Enter()
+            {
+                AtomBase.Stack.Push(null);
             }
 
             public void Dispose()
             {
-                AtomBase.Stack = _parent;
+                AtomBase.Stack.Pop();
             }
         }
 

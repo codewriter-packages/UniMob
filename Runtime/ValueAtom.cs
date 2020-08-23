@@ -23,7 +23,7 @@ namespace UniMob
         {
             get
             {
-                if (!IsActive && Stack == null && !KeepAlive)
+                if (!IsActive && Stack.Peek() == null && !KeepAlive)
                 {
                     return _value;
                 }

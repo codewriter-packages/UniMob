@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using UnityEngine;
-using UnityEngine.Profiling;
+using UnityEngine.Assertions;
 
 namespace UniMob
 {
@@ -90,9 +89,7 @@ namespace UniMob
             if (!force && State == AtomState.Actual)
                 return;
 
-            var parent = Stack;
-
-            Stack = this;
+            Stack.Push(this);
 
             if (!_active)
             {
@@ -136,7 +133,8 @@ namespace UniMob
                 Evaluate();
             }
 
-            Stack = parent;
+            var popped = Stack.Pop();
+            Assert.AreEqual(this, popped);
         }
 
         protected abstract void Evaluate();
@@ -233,7 +231,7 @@ namespace UniMob
 
         protected void SubscribeToParent()
         {
-            var parent = Stack;
+            var parent = Stack.Peek();
             if (parent != null)
             {
                 AddSubscriber(parent);
@@ -246,7 +244,12 @@ namespace UniMob
             return _debugName ?? "[Anonymous]";
         }
 
-        internal static AtomBase Stack;
+        [NotNull] internal static readonly Stack<AtomBase> Stack = new Stack<AtomBase>();
+
+        static AtomBase()
+        {
+            Stack.Push(null);
+        }
 
         private static readonly Stack<List<AtomBase>> ListPool = new Stack<List<AtomBase>>();
 

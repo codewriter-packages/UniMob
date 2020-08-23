@@ -2,8 +2,11 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 using ICustomAttributeProvider = Mono.Cecil.ICustomAttributeProvider;
 
 namespace UniMob.Editor.Weaver
@@ -81,6 +84,37 @@ namespace UniMob.Editor.Weaver
                 reference.GenericParameters.Add(new GenericParameter(genericParameter.Name, reference));
 
             return reference;
+        }
+
+        public static MethodDefinition FindMethod(this TypeDefinition type, string name, int parametersCount)
+        {
+            return type.Methods.Single(m => m.Name == name && m.Parameters.Count == parametersCount);
+        }
+
+        public static PropertyDefinition FindProperty(this TypeDefinition type, string name)
+        {
+            return type.Properties.Single(p => p.Name == name);
+        }
+
+        public static void InsertRange(this Collection<Instruction> collection, int index, Instruction[] instructions)
+        {
+            foreach (var instruction in instructions)
+            {
+                collection.Insert(index++, instruction);
+            }
+        }
+
+        public static string GenerateUniqueFieldName(TypeDefinition type, string name)
+        {
+            var resultName = name;
+
+            var index = 0;
+            while (type.Fields.Any(f => f.Name == name))
+            {
+                resultName = name + (++index);
+            }
+
+            return resultName;
         }
     }
 }

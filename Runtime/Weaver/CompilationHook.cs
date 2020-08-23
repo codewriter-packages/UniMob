@@ -155,7 +155,7 @@ namespace UniMob.Editor.Weaver
                     }
                 }
 
-                var dirty = new AtomWeaver().Weave(assembly);
+                var dirty = new AtomWeaverV2().Weave(assembly);
                 if (dirty)
                 {
                     assembly.Write(new WriterParameters {WriteSymbols = true});
