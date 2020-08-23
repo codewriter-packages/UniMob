@@ -3,7 +3,7 @@
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": true,
     "precompiledReferences": [
         "Mono.Cecil.dll",
@@ -19,5 +19,6 @@
             "expression": "0.0.0-preview",
             "define": "MONO_CECIL"
         }
-    ]
+    ],
+    "noEngineReferences": false
 }

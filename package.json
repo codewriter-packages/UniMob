@@ -2,10 +2,10 @@
   "name": "com.unimob",
   "displayName": "UniMob",
   "description": "Reactive state management for Unity",
-  "version": "0.2.6",
-  "unity": "2019.1",
+  "version": "0.3.0",
+  "unity": "2019.3",
   "license": "MIT",
-  "author": "Vanifatov Vlad (https://github.com/vanifatovvlad)",
+  "author": "Vlad Vanifatov (https://github.com/vanifatovvlad)",
   "homepage": "https://github.com/codewriter-packages/UniMob#readme",
   "dependencies": {
     "nuget.mono-cecil": "0.1.6-preview"

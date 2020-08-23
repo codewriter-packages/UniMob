@@ -7,7 +7,6 @@ using System.IO;
 using Mono.Cecil;
 using UnityEditor;
 using UnityEditor.Compilation;
-using UnityEditorInternal;
 using Debug = UnityEngine.Debug;
 using UnityAssembly = UnityEditor.Compilation.Assembly;
 
@@ -42,7 +41,7 @@ namespace UniMob.Editor.Weaver
                 }
             }
 
-            InternalEditorUtility.RequestScriptReload();
+            EditorUtility.RequestScriptReload();
         }
 
         private static UnityAssembly FindUniMobRuntime(UnityAssembly[] assemblies)
