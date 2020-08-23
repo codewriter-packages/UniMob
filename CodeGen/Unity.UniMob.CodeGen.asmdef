@@ -1,0 +1,28 @@
+{
+    "name": "Unity.UniMob.CodeGen",
+    "references": [
+        "UniMob"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Mono.Cecil.dll",
+        "Mono.Cecil.Rocks.dll",
+        "Mono.Cecil.Mdb.dll",
+        "Mono.Cecil.Pdb.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "nuget.mono-cecil",
+            "expression": "0.0.0-preview",
+            "define": "MONO_CECIL"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -5,20 +5,9 @@
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": true,
-    "precompiledReferences": [
-        "Mono.Cecil.dll",
-        "Mono.Cecil.Rocks.dll",
-        "Mono.Cecil.Mdb.dll",
-        "Mono.Cecil.Pdb.dll"
-    ],
+    "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "nuget.mono-cecil",
-            "expression": "0.0.0-preview",
-            "define": "MONO_CECIL"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }

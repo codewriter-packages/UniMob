@@ -7,7 +7,7 @@ using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
-using UnityEngine;
+using Unity.CompilationPipeline.Common.Diagnostics;
 
 namespace UniMob.Editor.Weaver
 {
@@ -17,6 +17,8 @@ namespace UniMob.Editor.Weaver
         private const string ConstructorName = ".ctor";
         private const string DirectEvaluateMethodName = nameof(ComputedAtom<int>.DirectEvaluate);
         private const string InvalidateMethodName = nameof(ComputedAtom<int>.Invalidate);
+
+        private List<DiagnosticMessage> _diagnosticMessages = new List<DiagnosticMessage>();
 
         private ModuleDefinition _module;
 
@@ -29,22 +31,22 @@ namespace UniMob.Editor.Weaver
 
         private MethodReference _atomPullCtorMethod;
 
-        public bool Weave(AssemblyDefinition assembly)
+        public List<DiagnosticMessage> Weave(AssemblyDefinition assembly, out bool didAnyChange)
         {
             Prepare(assembly);
-
-            var dirty = false;
 
             var allProperties = _module
                 .GetAllTypes()
                 .SelectMany(type => type.Properties);
 
+            didAnyChange = false;
+
             foreach (var property in allProperties)
             {
-                dirty |= Weave(property);
+                didAnyChange |= Weave(property);
             }
 
-            return dirty;
+            return _diagnosticMessages;
         }
 
         private void Prepare(AssemblyDefinition assembly)
@@ -77,7 +79,10 @@ namespace UniMob.Editor.Weaver
 
             if (property.GetMethod == null)
             {
-                Debug.LogError($"[UniMob] Atom attribute on set-only property '{property.FullName}' don't make sense");
+                _diagnosticMessages.Add(UserError.MakeWarning("UniMobAtomUselessOnSetOnlyProperties",
+                    $"Atom attribute on set-only property `{property.Name}` don't make sense",
+                    property.SetMethod, null));
+
                 return false;
             }
 
