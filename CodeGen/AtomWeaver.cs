@@ -1,5 +1,3 @@
-#if UNITY_EDITOR && MONO_CECIL && UNIMOB_CODEGEN_ENABLED
-
 using System;
 using System.Linq;
 using Mono.Cecil;
@@ -251,4 +249,3 @@ namespace UniMob.Editor.Weaver
         }
     }
 }
-#endif

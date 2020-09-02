@@ -1,5 +1,3 @@
-#if UNITY_EDITOR && MONO_CECIL && UNIMOB_CODEGEN_ENABLED
-
 // ReSharper disable FieldCanBeMadeReadOnly.Local
 
 using System.Collections.Generic;
@@ -298,4 +296,3 @@ namespace UniMob.Editor.Weaver
         }
     }
 }
-#endif
