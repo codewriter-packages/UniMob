@@ -16,7 +16,7 @@ namespace UniMob.Editor.Weaver
         private const string ValuePropertyName = nameof(ComputedAtom<int>.Value);
         private const string ConstructorName = ".ctor";
         private const string DirectEvaluateMethodName = nameof(ComputedAtom<int>.DirectEvaluate);
-        private const string InvalidateMethodName = nameof(ComputedAtom<int>.Invalidate);
+        private const string CompAndInvalidateMethodName = nameof(ComputedAtom<int>.CompareAndInvalidate);
 
         private List<DiagnosticMessage> _diagnosticMessages = new List<DiagnosticMessage>();
 
@@ -27,7 +27,7 @@ namespace UniMob.Editor.Weaver
         private MethodReference _atomCtorMethod;
         private MethodReference _atomGetValueMethod;
         private MethodReference _atomDirectEvalMethod;
-        private MethodReference _atomInvalidateMethod;
+        private MethodReference _atomCompAndInvalidateMethod;
 
         private MethodReference _atomPullCtorMethod;
 
@@ -62,7 +62,8 @@ namespace UniMob.Editor.Weaver
 
             _atomCtorMethod = _module.ImportReference(atomTypeDef.FindMethod(ConstructorName, 2));
             _atomDirectEvalMethod = _module.ImportReference(atomTypeDef.FindMethod(DirectEvaluateMethodName, 0));
-            _atomInvalidateMethod = _module.ImportReference(atomTypeDef.FindMethod(InvalidateMethodName, 0));
+            _atomCompAndInvalidateMethod =
+                _module.ImportReference(atomTypeDef.FindMethod(CompAndInvalidateMethodName, 1));
 
             _atomPullCtorMethod = _module.ImportReference(atomPullDef.FindMethod(ConstructorName, 2));
         }
@@ -246,8 +247,9 @@ namespace UniMob.Editor.Weaver
             private PropertyDefinition _property;
 
             private Instruction _nullCheckEndInstruction;
+            private Instruction _preReturnInstruction;
 
-            private MethodReference _invalidateMethod;
+            private MethodReference _compAndInvalidateMethod;
 
             public AtomSetterMethodWeaver(AtomWeaverV2 weaver, PropertyDefinition property, FieldReference atomField)
             {
@@ -255,9 +257,11 @@ namespace UniMob.Editor.Weaver
                 _property = property;
 
                 _nullCheckEndInstruction = Instruction.Create(OpCodes.Nop);
+                _preReturnInstruction = Instruction.Create(OpCodes.Nop);
 
                 var propertyType = property.PropertyType;
-                _invalidateMethod = Helpers.MakeHostInstanceGeneric(weaver._atomInvalidateMethod, propertyType);
+                _compAndInvalidateMethod =
+                    Helpers.MakeHostInstanceGeneric(weaver._atomCompAndInvalidateMethod, propertyType);
             }
 
             public void Weave()
@@ -266,6 +270,8 @@ namespace UniMob.Editor.Weaver
                 var instructions = body.Instructions;
                 var index = 0;
                 Prepend(ref index, instructions);
+
+                body.Instructions.Insert(body.Instructions.Count - 1, _preReturnInstruction);
 
                 body.OptimizeMacros();
             }
@@ -281,7 +287,11 @@ namespace UniMob.Editor.Weaver
                 // atom.Invalidate()
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0));
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldfld, _atomField));
-                il.Insert(ind++, Instruction.Create(OpCodes.Callvirt, _invalidateMethod));
+                il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_1));
+                il.Insert(ind++, Instruction.Create(OpCodes.Callvirt, _compAndInvalidateMethod));
+                il.Insert(ind++, Instruction.Create(OpCodes.Brtrue, _nullCheckEndInstruction));
+
+                il.Insert(ind++, Instruction.Create(OpCodes.Br, _preReturnInstruction));
 
                 il.Insert(ind++, _nullCheckEndInstruction);
             }

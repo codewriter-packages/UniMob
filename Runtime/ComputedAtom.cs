@@ -53,6 +53,18 @@ namespace UniMob
             return false;
         }
 
+        // for CodeGen
+        public bool CompareAndInvalidate(T value)
+        {
+            if (_hasCache && _comparer.Equals(value, _cache))
+            {
+                return false;
+            }
+
+            Invalidate();
+            return true;
+        }
+
         public T Value
         {
             get
