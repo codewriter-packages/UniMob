@@ -88,6 +88,7 @@ namespace UniMob.Tests
             var activation = "";
 
             var source = Atom.Value(
+                "source",
                 0,
                 callbacks: new ActionAtomCallbacks(
                     onActive: () => activation += "S",
@@ -114,7 +115,7 @@ namespace UniMob.Tests
             target.Get();
             Assert.AreEqual("", activation);
 
-            var autoRun = Atom.AutoRun(() => target.Get());
+            var autoRun = Atom.Reaction("autoRun", () => target.Get());
             Assert.AreEqual("TMS", activation);
 
             autoRun.Dispose();
@@ -137,12 +138,12 @@ namespace UniMob.Tests
                 )
             );
 
-            var modifiedSource = Atom.Value(1);
+            var modifiedSource = Atom.Value("modifiedSource", 1);
             var listener = Atom.Computed(() => activationSource.Value + modifiedSource.Value);
 
             Assert.AreEqual("", activation);
 
-            var autoRun = Atom.AutoRun(() => listener.Get());
+            var autoRun = Atom.Reaction("autoRun", () => listener.Get());
             Assert.AreEqual("A", activation);
 
             modifiedSource.Value = 2;
@@ -159,7 +160,9 @@ namespace UniMob.Tests
         {
             var activation = "";
 
-            var atom = Atom.Value(1,
+            var atom = Atom.Value(
+                "atom",
+                1,
                 callbacks: new ActionAtomCallbacks(
                     onActive: () => activation += "A",
                     onInactive: () => activation += "D"
@@ -168,7 +171,7 @@ namespace UniMob.Tests
 
             Assert.AreEqual("", activation);
 
-            var autoRun = Atom.AutoRun(() => atom.Get());
+            var autoRun = Atom.Reaction("autoRun", () => atom.Get());
             Assert.AreEqual("A", activation);
 
             atom.Value = 2;
@@ -205,7 +208,7 @@ namespace UniMob.Tests
         [Test]
         public void InstantActualization()
         {
-            var source = Atom.Value(1);
+            var source = Atom.Value("source", 1);
             var middle = Atom.Computed(() => source.Value + 1);
             var target = Atom.Computed(() => middle.Value + 1);
 
@@ -221,7 +224,7 @@ namespace UniMob.Tests
         {
             var targetUpdates = 0;
 
-            var source = Atom.Value(1);
+            var source = Atom.Value("source", 1);
             var middle = Atom.Computed(() => Math.Abs(source.Value));
             var target = Atom.Computed(() =>
             {
@@ -243,7 +246,7 @@ namespace UniMob.Tests
         {
             var actualization = "";
 
-            var source = Atom.Value(1);
+            var source = Atom.Value("source", 1);
             var middle = Atom.Computed(() =>
             {
                 actualization += "M";
@@ -256,7 +259,7 @@ namespace UniMob.Tests
                 return middle.Value;
             });
 
-            var autoRun = Atom.AutoRun(() => target.Get());
+            var autoRun = Atom.Reaction("autoRun", () => target.Get());
             Assert.AreEqual("TM", actualization);
 
             source.Value = 2;
@@ -272,7 +275,7 @@ namespace UniMob.Tests
         {
             int targetValue = 0;
 
-            var source = Atom.Value(1);
+            var source = Atom.Value("source", 1);
             var middle = Atom.Computed(() => source.Value + 1);
             var target = Atom.Computed(() => targetValue = middle.Value + 1, keepAlive: true);
 
@@ -289,7 +292,9 @@ namespace UniMob.Tests
         [Test]
         public void SettingEqualStateAreIgnored()
         {
-            var atom = Atom.Value(new[] {1, 2, 3},
+            var atom = Atom.Value(
+                "atom",
+                new[] {1, 2, 3},
                 comparer: new TestComparer<int[]>((a, b) => a.SequenceEqual(b)));
 
             var v1 = atom.Value;
@@ -304,7 +309,7 @@ namespace UniMob.Tests
         [Test]
         public void ThrowException()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value("source", 0);
             var exception = new Exception();
 
             var middle = Atom.Computed(() =>
@@ -338,11 +343,11 @@ namespace UniMob.Tests
         public void Invalidate()
         {
             //
-            var source = Atom.Value(0);
+            var source = Atom.Value("source", 0);
 
             string actualization = "";
 
-            var dispose = Atom.AutoRun(() =>
+            var dispose = Atom.Reaction("reaction", () =>
             {
                 source.Get();
                 actualization += "T";
@@ -362,10 +367,10 @@ namespace UniMob.Tests
         [Test]
         public void AutoRun()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value("source", 0);
 
             int runs = 0;
-            var disposer = Atom.AutoRun(() =>
+            var disposer = Atom.Reaction("reaction", () =>
             {
                 source.Get();
                 ++runs;
@@ -386,11 +391,11 @@ namespace UniMob.Tests
         [Test]
         public void WhenAtom()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value("source", 0);
 
             string watch = "";
 
-            Atom.When(() => source.Value > 1, () => watch += "B");
+            Atom.When("when", () => source.Value > 1, () => watch += "B");
 
             AtomTestUtil.Sync();
             Assert.AreEqual("", watch);
@@ -411,7 +416,7 @@ namespace UniMob.Tests
         [Test]
         public void Reaction()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value("source", 0);
             var middle = Atom.Computed(
                 () => source.Value < 0 ? throw new Exception() : source.Value);
 
@@ -419,6 +424,7 @@ namespace UniMob.Tests
             var errors = 0;
 
             Atom.Reaction(
+                "reaction",
                 pull: () => middle.Value,
                 reaction: (value, disposable) =>
                 {
@@ -449,12 +455,12 @@ namespace UniMob.Tests
         [Test]
         public void UnwatchedPullOfObsoleteActiveAtom()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value("source", 0);
 
             var computed = Atom.Computed(() => source.Value + 1);
             var computedBase = (AtomBase) computed;
 
-            var reaction = Atom.AutoRun(() => computed.Get());
+            var reaction = Atom.Reaction("reaction", () => computed.Get());
 
             Assert.IsTrue(computedBase.IsActive);
             Assert.AreEqual(1, computedBase.Children?.Count ?? 0);
@@ -497,7 +503,7 @@ namespace UniMob.Tests
 
             Exception exception = null;
 
-            var reaction = Atom.AutoRun(() =>
+            var reaction = Atom.Reaction("reaction", () =>
             {
                 a.Get();
                 b.Get();
@@ -515,10 +521,10 @@ namespace UniMob.Tests
         [Test]
         public void SelfUpdateActualizeNextFrame()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value("source", 0);
 
             int runs = 0;
-            var reaction = Atom.AutoRun(() =>
+            var reaction = Atom.Reaction("reaction", () =>
             {
                 runs++;
 

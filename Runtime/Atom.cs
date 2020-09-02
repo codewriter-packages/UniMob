@@ -6,21 +6,23 @@ namespace UniMob
     public static class Atom
     {
         public static MutableAtom<T> Value<T>(
+            string debugName,
             T value,
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
         {
-            return new ValueAtom<T>(null, value, callbacks, comparer);
+            return new ValueAtom<T>(debugName, value, callbacks, comparer);
         }
 
         public static Atom<T> Computed<T>(
             AtomPull<T> pull,
             bool keepAlive = false,
             bool requiresReaction = false,
+            string debugName = null,
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
         {
-            return new ComputedAtom<T>(null, pull, null, keepAlive, requiresReaction, callbacks, comparer);
+            return new ComputedAtom<T>(debugName, pull, null, keepAlive, requiresReaction, callbacks, comparer);
         }
 
         public static MutableAtom<T> Computed<T>(
@@ -28,24 +30,26 @@ namespace UniMob
             AtomPush<T> push,
             bool keepAlive = false,
             bool requiresReaction = false,
+            string debugName = null,
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
         {
-            return new ComputedAtom<T>(null, pull, push, keepAlive, requiresReaction, callbacks, comparer);
+            return new ComputedAtom<T>(debugName, pull, push, keepAlive, requiresReaction, callbacks, comparer);
         }
 
         public static IDisposable Reaction<T>(
+            string debugName,
             AtomPull<T> pull,
             Action<T, IDisposable> reaction,
             IEqualityComparer<T> comparer = null,
-            bool fireImmediately = false,
+            bool fireImmediately = true,
             Action<Exception> exceptionHandler = null)
         {
             var valueAtom = Computed(pull, comparer: comparer);
             bool firstRun = true;
 
             ReactionAtom atom = null;
-            atom = new ReactionAtom(null, () =>
+            atom = new ReactionAtom(debugName, () =>
             {
                 var value = valueAtom.Value;
 
@@ -69,18 +73,23 @@ namespace UniMob
         }
 
         public static IDisposable Reaction<T>(
+            string debugName,
             AtomPull<T> pull,
             Action<T> reaction,
             IEqualityComparer<T> comparer = null,
-            bool fireImmediately = false,
+            bool fireImmediately = true,
             Action<Exception> exceptionHandler = null)
         {
-            return Reaction(pull, (value, _) => reaction(value), comparer, fireImmediately, exceptionHandler);
+            return Reaction(debugName, pull, (value, _) => reaction(value), comparer, fireImmediately,
+                exceptionHandler);
         }
 
-        public static IDisposable AutoRun(Action reaction, Action<Exception> exceptionHandler = null)
+        public static IDisposable Reaction(
+            string debugName,
+            Action reaction,
+            Action<Exception> exceptionHandler = null)
         {
-            var atom = new ReactionAtom(null, reaction, exceptionHandler);
+            var atom = new ReactionAtom(debugName, reaction, exceptionHandler);
             atom.Get();
             return atom;
         }
@@ -115,14 +124,18 @@ namespace UniMob
         /// Invokes callback when condition becomes True.
         /// If condition throw exception, invoke exceptionHandler.
         /// </summary>
+        /// <param name="debugName">Atom debug name</param>
         /// <param name="cond">Watched condition</param>
         /// <param name="callback">Value handler</param>
         /// <param name="exceptionHandler">Exception handler</param>
         /// <returns>Disposable for cancel watcher</returns>
-        public static IDisposable When(Func<bool> cond, Action callback, Action<Exception> exceptionHandler = null)
+        public static IDisposable When(
+            string debugName,
+            Func<bool> cond, Action callback,
+            Action<Exception> exceptionHandler = null)
         {
             IDisposable watcher = null;
-            return watcher = AutoRun(() =>
+            return watcher = Reaction(debugName, () =>
             {
                 Exception exception = null;
                 try

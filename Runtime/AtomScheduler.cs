@@ -12,27 +12,37 @@ namespace UniMob
         private static Queue<AtomBase> _updatingNextFrame = new Queue<AtomBase>();
         private static readonly Queue<AtomBase> Reaping = new Queue<AtomBase>();
 
-        private static AtomScheduler Current;
+        private static AtomScheduler _current;
+        private static bool _dirty;
 
         private void Update()
         {
+            if (!_dirty)
+            {
+                return;
+            }
+
+            _dirty = false;
+
             Sync();
         }
 
         internal static void Actualize(AtomBase atom)
         {
+            _dirty = true;
             _updatingNextFrame.Enqueue(atom);
 
-            if (ReferenceEquals(Current, null) && Application.isPlaying)
+            if (ReferenceEquals(_current, null) && Application.isPlaying)
             {
                 var go = new GameObject(nameof(AtomScheduler));
-                Current = go.AddComponent<AtomScheduler>();
-                DontDestroyOnLoad(Current);
+                _current = go.AddComponent<AtomScheduler>();
+                DontDestroyOnLoad(_current);
             }
         }
 
         internal static void Reap(AtomBase atom)
         {
+            _dirty = true;
             atom.Reaping = true;
             Reaping.Enqueue(atom);
         }

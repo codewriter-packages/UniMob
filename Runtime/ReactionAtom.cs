@@ -9,7 +9,7 @@ namespace UniMob
         private readonly Action<Exception> _exceptionHandler;
         private readonly string _debugName;
 
-        internal ReactionAtom(string debugName, Action reaction, Action<Exception> exceptionHandler = null)
+        public ReactionAtom(string debugName, Action reaction, Action<Exception> exceptionHandler = null)
             : base(debugName, true, null)
         {
             _reaction = reaction ?? throw new ArgumentNullException(nameof(reaction));
