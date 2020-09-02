@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace UniMob
 {
@@ -162,6 +163,18 @@ namespace UniMob
                     watcher = null;
                 }
             });
+        }
+
+        public static Task When(string debugName, Func<bool> cond)
+        {
+            var tcs = new TaskCompletionSource<object>();
+
+            Atom.When(debugName, cond,
+                () => tcs.TrySetResult(null),
+                exception => tcs.TrySetException(exception)
+            );
+
+            return tcs.Task;
         }
     }
 }
