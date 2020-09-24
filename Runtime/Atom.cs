@@ -38,9 +38,9 @@ namespace UniMob
             return new ComputedAtom<T>(debugName, pull, push, keepAlive, requiresReaction, callbacks, comparer);
         }
 
-        public static IDisposable Reaction<T>(
+        public static Reaction Reaction<T>(
             AtomPull<T> pull,
-            Action<T, IDisposable> reaction,
+            Action<T, Reaction> reaction,
             IEqualityComparer<T> comparer = null,
             bool fireImmediately = true,
             Action<Exception> exceptionHandler = null,
@@ -49,7 +49,7 @@ namespace UniMob
             var valueAtom = Computed(pull, comparer: comparer);
             bool firstRun = true;
 
-            ReactionAtom atom = null;
+            Reaction atom = null;
             atom = new ReactionAtom(debugName, () =>
             {
                 var value = valueAtom.Value;
@@ -69,11 +69,11 @@ namespace UniMob
                 }
             }, exceptionHandler);
 
-            atom.Get();
+            atom.Activate();
             return atom;
         }
 
-        public static IDisposable Reaction<T>(
+        public static Reaction Reaction<T>(
             AtomPull<T> pull,
             Action<T> reaction,
             IEqualityComparer<T> comparer = null,
@@ -85,13 +85,13 @@ namespace UniMob
                 exceptionHandler, debugName);
         }
 
-        public static IDisposable Reaction(
+        public static Reaction Reaction(
             Action reaction,
             Action<Exception> exceptionHandler = null,
             string debugName = null)
         {
             var atom = new ReactionAtom(debugName, reaction, exceptionHandler);
-            atom.Get();
+            atom.Activate();
             return atom;
         }
 
@@ -130,12 +130,12 @@ namespace UniMob
         /// <param name="callback">Value handler</param>
         /// <param name="exceptionHandler">Exception handler</param>
         /// <returns>Disposable for cancel watcher</returns>
-        public static IDisposable When(
+        public static Reaction When(
             Func<bool> cond, Action callback,
             Action<Exception> exceptionHandler = null,
             string debugName = null)
         {
-            IDisposable watcher = null;
+            Reaction watcher = null;
             return watcher = Reaction(() =>
             {
                 Exception exception = null;
@@ -159,7 +159,7 @@ namespace UniMob
                     else callback();
 
                     // ReSharper disable once AccessToModifiedClosure
-                    watcher?.Dispose();
+                    watcher?.Deactivate();
                     watcher = null;
                 }
             }, debugName: debugName);

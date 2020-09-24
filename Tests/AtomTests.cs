@@ -117,7 +117,7 @@ namespace UniMob.Tests
             var autoRun = Atom.Reaction(() => target.Get());
             Assert.AreEqual("TMS", activation);
 
-            autoRun.Dispose();
+            autoRun.Deactivate();
             Assert.AreEqual("TMS", activation);
 
             AtomTestUtil.Sync();
@@ -151,7 +151,7 @@ namespace UniMob.Tests
             AtomTestUtil.Sync();
             Assert.AreEqual("A", activation);
 
-            autoRun.Dispose();
+            autoRun.Deactivate();
         }
 
         [Test]
@@ -178,7 +178,7 @@ namespace UniMob.Tests
             AtomTestUtil.Sync();
             Assert.AreEqual("A", activation);
 
-            autoRun.Dispose();
+            autoRun.Deactivate();
         }
 
         [Test]
@@ -265,7 +265,7 @@ namespace UniMob.Tests
             AtomTestUtil.Sync();
             Assert.AreEqual("TMTM", actualization);
 
-            autoRun.Dispose();
+            autoRun.Deactivate();
         }
 
         [Test]
@@ -324,7 +324,7 @@ namespace UniMob.Tests
                 reaction: () => middle.Get(),
                 exceptionHandler: ex => stack.Push(ex));
 
-            reaction.Get();
+            reaction.Activate();
 
             Assert.AreEqual(1, stack.Count);
             Assert.AreEqual(exception, stack.Peek());
@@ -358,7 +358,7 @@ namespace UniMob.Tests
             AtomTestUtil.Sync();
             Assert.AreEqual("TT", actualization);
 
-            dispose.Dispose();
+            dispose.Deactivate();
         }
 
         [Test]
@@ -379,7 +379,7 @@ namespace UniMob.Tests
 
             Assert.AreEqual(2, runs);
 
-            disposer.Dispose();
+            disposer.Deactivate();
             source.Value++;
             AtomTestUtil.Sync();
             Assert.AreEqual(2, runs);
@@ -425,7 +425,7 @@ namespace UniMob.Tests
                 reaction: (value, disposable) =>
                 {
                     result = value;
-                    if (value == 2) disposable.Dispose();
+                    if (value == 2) disposable.Deactivate();
                 },
                 exceptionHandler: ex => ++errors);
 
@@ -472,7 +472,7 @@ namespace UniMob.Tests
 
             Assert.AreEqual(1, computedBase.Children?.Count ?? 0);
 
-            reaction.Dispose();
+            reaction.Deactivate();
         }
 
         [Test]
@@ -511,7 +511,7 @@ namespace UniMob.Tests
             Assert.Throws<CyclicAtomDependencyException>(() => b.Get());
             Assert.IsTrue(exception is CyclicAtomDependencyException);
 
-            reaction.Dispose();
+            reaction.Deactivate();
         }
 
         [Test]
@@ -545,7 +545,7 @@ namespace UniMob.Tests
             Assert.AreEqual(3, runs);
             Assert.AreEqual(3, source.Value);
 
-            reaction.Dispose();
+            reaction.Deactivate();
         }
 
 

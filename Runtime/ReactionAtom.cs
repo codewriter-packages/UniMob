@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace UniMob
 {
-    public class ReactionAtom : AtomBase, IDisposable
+    public class ReactionAtom : AtomBase, Reaction
     {
         private readonly Action _reaction;
         private readonly Action<Exception> _exceptionHandler;
@@ -16,12 +16,7 @@ namespace UniMob
             _exceptionHandler = exceptionHandler ?? Debug.LogException;
         }
 
-        public void Dispose()
-        {
-            Deactivate();
-        }
-
-        public void Get()
+        public void Activate()
         {
             Actualize();
         }
