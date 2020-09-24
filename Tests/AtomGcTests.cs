@@ -7,7 +7,7 @@ namespace UniMob.Tests
         [Test]
         public void NoSubscribed()
         {
-            var source = Atom.Value("source", 1);
+            var source = Atom.Value(1);
             var middle = Atom.Computed(() => source.Value + 1);
             var target = Atom.Computed(() => middle.Value + source.Value);
 
@@ -21,11 +21,11 @@ namespace UniMob.Tests
         [Test]
         public void AutoUnsubscribed_Reaction()
         {
-            var source = Atom.Value("source", 1);
+            var source = Atom.Value(1);
             var middle = Atom.Computed(() => source.Value + 1);
             var target = Atom.Computed(() => middle.Value + source.Value);
 
-            var run = Atom.Reaction("run", () => target.Get());
+            var run = Atom.Reaction(() => target.Get());
 
             Assert.AreEqual(2, source.SubscribersCount());
             Assert.AreEqual(1, middle.SubscribersCount());
@@ -42,11 +42,11 @@ namespace UniMob.Tests
         [Test]
         public void KeepAliveComputed()
         {
-            var source = Atom.Value("source", 1);
+            var source = Atom.Value(1);
             var middle = Atom.Computed(() => source.Value + 1, keepAlive: true);
             var target = Atom.Computed(() => middle.Value + source.Value);
 
-            var run = Atom.Reaction("run", () => target.Get());
+            var run = Atom.Reaction(() => target.Get());
 
             Assert.AreEqual(2, source.SubscribersCount());
             Assert.AreEqual(1, middle.SubscribersCount());
@@ -68,13 +68,13 @@ namespace UniMob.Tests
         [Test]
         public void AutoUnsubscribed_MultiReaction()
         {
-            var source = Atom.Value("source", 1);
+            var source = Atom.Value(1);
             var middle = Atom.Computed(() => source.Value + 1);
             var target1 = Atom.Computed(() => middle.Value + 1);
             var target2 = Atom.Computed(() => middle.Value + 1);
 
-            var run1 = Atom.Reaction("run1", () => target1.Get());
-            var run2 = Atom.Reaction("run2", () => target2.Get());
+            var run1 = Atom.Reaction(() => target1.Get());
+            var run2 = Atom.Reaction(() => target2.Get());
 
             Assert.AreEqual(2, middle.SubscribersCount());
 

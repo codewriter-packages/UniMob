@@ -7,10 +7,10 @@ namespace UniMob
     public static class Atom
     {
         public static MutableAtom<T> Value<T>(
-            string debugName,
             T value,
             IAtomCallbacks callbacks = null,
-            IEqualityComparer<T> comparer = null)
+            IEqualityComparer<T> comparer = null,
+            string debugName = null)
         {
             return new ValueAtom<T>(debugName, value, callbacks, comparer);
         }
@@ -19,9 +19,9 @@ namespace UniMob
             AtomPull<T> pull,
             bool keepAlive = false,
             bool requiresReaction = false,
-            string debugName = null,
             IAtomCallbacks callbacks = null,
-            IEqualityComparer<T> comparer = null)
+            IEqualityComparer<T> comparer = null,
+            string debugName = null)
         {
             return new ComputedAtom<T>(debugName, pull, null, keepAlive, requiresReaction, callbacks, comparer);
         }
@@ -31,20 +31,20 @@ namespace UniMob
             AtomPush<T> push,
             bool keepAlive = false,
             bool requiresReaction = false,
-            string debugName = null,
             IAtomCallbacks callbacks = null,
-            IEqualityComparer<T> comparer = null)
+            IEqualityComparer<T> comparer = null,
+            string debugName = null)
         {
             return new ComputedAtom<T>(debugName, pull, push, keepAlive, requiresReaction, callbacks, comparer);
         }
 
         public static IDisposable Reaction<T>(
-            string debugName,
             AtomPull<T> pull,
             Action<T, IDisposable> reaction,
             IEqualityComparer<T> comparer = null,
             bool fireImmediately = true,
-            Action<Exception> exceptionHandler = null)
+            Action<Exception> exceptionHandler = null,
+            string debugName = null)
         {
             var valueAtom = Computed(pull, comparer: comparer);
             bool firstRun = true;
@@ -74,21 +74,21 @@ namespace UniMob
         }
 
         public static IDisposable Reaction<T>(
-            string debugName,
             AtomPull<T> pull,
             Action<T> reaction,
             IEqualityComparer<T> comparer = null,
             bool fireImmediately = true,
-            Action<Exception> exceptionHandler = null)
+            Action<Exception> exceptionHandler = null,
+            string debugName = null)
         {
-            return Reaction(debugName, pull, (value, _) => reaction(value), comparer, fireImmediately,
-                exceptionHandler);
+            return Reaction(pull, (value, _) => reaction(value), comparer, fireImmediately,
+                exceptionHandler, debugName);
         }
 
         public static IDisposable Reaction(
-            string debugName,
             Action reaction,
-            Action<Exception> exceptionHandler = null)
+            Action<Exception> exceptionHandler = null,
+            string debugName = null)
         {
             var atom = new ReactionAtom(debugName, reaction, exceptionHandler);
             atom.Get();
@@ -131,12 +131,12 @@ namespace UniMob
         /// <param name="exceptionHandler">Exception handler</param>
         /// <returns>Disposable for cancel watcher</returns>
         public static IDisposable When(
-            string debugName,
             Func<bool> cond, Action callback,
-            Action<Exception> exceptionHandler = null)
+            Action<Exception> exceptionHandler = null,
+            string debugName = null)
         {
             IDisposable watcher = null;
-            return watcher = Reaction(debugName, () =>
+            return watcher = Reaction(() =>
             {
                 Exception exception = null;
                 try
@@ -162,16 +162,17 @@ namespace UniMob
                     watcher?.Dispose();
                     watcher = null;
                 }
-            });
+            }, debugName: debugName);
         }
 
-        public static Task When(string debugName, Func<bool> cond)
+        public static Task When(Func<bool> cond, string debugName = null)
         {
             var tcs = new TaskCompletionSource<object>();
 
-            Atom.When(debugName, cond,
+            Atom.When(cond,
                 () => tcs.TrySetResult(null),
-                exception => tcs.TrySetException(exception)
+                exception => tcs.TrySetException(exception),
+                debugName
             );
 
             return tcs.Task;
