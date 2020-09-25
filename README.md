@@ -1,4 +1,4 @@
-# UniMob &middot; [![Github license](https://img.shields.io/github/license/codewriter-packages/UniMob.svg)](#) [![Unity 2019.3](https://img.shields.io/badge/Unity-2019.3+-eef.svg)](#)
+# UniMob &middot; [![Github license](https://img.shields.io/github/license/codewriter-packages/UniMob.svg?style=flat-square)](#) [![Unity 2019.3](https://img.shields.io/badge/Unity-2019.3+-2296F3.svg?style=flat-square)](#) ![GitHub package.json version](https://img.shields.io/github/package-json/v/codewriter-packages/UniMob?style=flat-square)
 _Reactive state management for Unity_
 
 ## Introduction
@@ -8,6 +8,31 @@ UniMob is a library that makes state management simple and scalable by transpare
 > _Anything that can be derived from the application state, should be derived. Automatically._
 
 which includes the UI, data serialization, server communication, etc.
+
+## A quick example
+
+So what does code that uses UniMob look like?
+
+```csharp
+using UniMob;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Counter : MonoBehaviour
+{
+    public Text counterText;
+    public Button incrementButton;
+
+    [Atom] private int Counter { get; set; }
+
+    private void Start()
+    {
+        incrementButton.onClick.AddListener(() => Counter += 1);
+        
+        Atom.Reaction(() => counterText.text = "Tap count: " + Counter);
+    }
+}
+```
 
 ## Core concepts
 
@@ -31,7 +56,7 @@ Using `[Atom]` is like turning a property of an object into a spreadsheet cell t
 
 ### Computed values
 
-With UniMob you can define values that will be derived automatically when relevant data is modified. By using the `[Atom]` attribute.
+With UniMob you can define values that will be derived automatically when relevant data is modified.
 
 ```csharp
 using UniMob;
