@@ -77,26 +77,38 @@ Reactions are similar to a computed value, but instead of producing a new value,
 
 #### UniMob.UI widgets
 
-If you are using [UniMob.UI](https://github.com/codewriter-packages/UniMob.UI), you can use atoms inside your widgets:
+If you are using [UniMob.UI](https://github.com/codewriter-packages/UniMob.UI), you can use observable state in your widgets. UniMob will make sure the interface are always re-rendered whenever needed.
 
 ```csharp
-public class TodoListWidget : StatefulWidget
+public class TodoListApp : UniMobUIApp
 {
-    public TodoList TodoList { get; set; }
+    private TodoList todoList = new TodoList();
 
-    public override State CreateState() => new TodoListState();
-}
-
-public class TodoListState : HocState<TodoListWidget>
-{
-    public override Widget Build(BuildContext context)
+    protected override Widget Build(BuildContext context)
     {
         return new Column
         {
+            MainAxisSize = AxisSize.Max,
+            CrossAxisSize = AxisSize.Max,
             Children =
             {
-                Widget.TodoList.Todos.Select(todo => new TodoWidget(todo)),
-                new UniMobText("Tasks left: " + Widget.TodoList.UnfinishedTodoCount),
+                todoList.Todos.Select(todo => BuildTodo(todo)),
+                new UniMobText(WidgetSize.FixedHeight(60))
+                {
+                    Value = $"Tasks left: {todoList.UnfinishedTodoCount}",
+                }
+            }
+        };
+    }
+
+    private Widget BuildTodo(Todo todo)
+    {
+        return new UniMobButton
+        {
+            OnClick = () => todo.Finished = !todo.Finished,
+            Child = new UniMobText(WidgetSize.FixedHeight(60))
+            {
+                Value = $" - {todo.Title}: {(todo.Finished ? "Finished" : "Active")}"
             }
         };
     }
@@ -141,6 +153,12 @@ store.Todos = store.Todos
     .ToArray();
 store.Todos[0].Finished = true;
 ```
+
+## How to Install
+Minimal Unity Version is 2019.3.
+
+Library distributed as git package ([How to install package from git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.html))
+<br>Git URL: `https://github.com/codewriter-packages/UniMob.git`
 
 ## License
 
