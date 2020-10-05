@@ -1,9 +1,9 @@
-# UniMob &middot; [![Github license](https://img.shields.io/github/license/codewriter-packages/UniMob.svg?style=flat-square)](#) [![Unity 2019.3](https://img.shields.io/badge/Unity-2019.3+-2296F3.svg?style=flat-square)](#) ![GitHub package.json version](https://img.shields.io/github/package-json/v/codewriter-packages/UniMob?style=flat-square)
+# UniMob [![Github license](https://img.shields.io/github/license/codewriter-packages/UniMob.svg?style=flat-square)](#) [![Unity 2019.3](https://img.shields.io/badge/Unity-2019.3+-2296F3.svg?style=flat-square)](#) ![GitHub package.json version](https://img.shields.io/github/package-json/v/codewriter-packages/UniMob?style=flat-square)
 _Reactive state management for Unity_
 
 ## Introduction
 
-UniMob is a library that makes state management simple and scalable by transparently applying functional reactive programming (FRP). The philosophy behind UniMob is very simple:
+UniMob is a library that makes state management simple and scalable by transparently applying functional reactive programming. The philosophy behind UniMob is very simple:
 
 > _Anything that can be derived from the application state, should be derived. Automatically._
 
@@ -23,12 +23,15 @@ public class Counter : MonoBehaviour
     public Text counterText;
     public Button incrementButton;
 
+    // declare observable property
     [Atom] private int Counter { get; set; }
 
     private void Start()
     {
+        // increment Counter on button click
         incrementButton.onClick.AddListener(() => Counter += 1);
         
+        // Update counterText when Counter changed
         Atom.Reaction(() => counterText.text = "Tap count: " + Counter);
     }
 }
@@ -73,7 +76,7 @@ UniMob will ensure that `UnfinishedTodoCount` is updated automatically when a to
 
 ### Reactions
 
-Reactions are similar to a computed value, but instead of producing a new value, a reaction produces a side effect for things like printing to the console, making network requests, updating the UniMob.UI widgets, etc. In short, reactions bridge [reactive](https://en.wikipedia.org/wiki/Reactive_programming) and [imperative](https://en.wikipedia.org/wiki/Imperative_programming) programming.
+Reactions are similar to a computed value, but instead of producing a new value, a reaction produces a side effect for things like printing to the console, making network requests, updating the UniMob.UI widgets, etc. In short, reactions bridge reactive and imperative programming.
 
 #### UniMob.UI widgets
 
@@ -95,7 +98,7 @@ public class TodoListApp : UniMobUIApp
                 todoList.Todos.Select(todo => BuildTodo(todo)),
                 new UniMobText(WidgetSize.FixedHeight(60))
                 {
-                    Value = $"Tasks left: {todoList.UnfinishedTodoCount}",
+                    Value = "Tasks left: " + todoList.UnfinishedTodoCount
                 }
             }
         };
@@ -108,7 +111,7 @@ public class TodoListApp : UniMobUIApp
             OnClick = () => todo.Finished = !todo.Finished,
             Child = new UniMobText(WidgetSize.FixedHeight(60))
             {
-                Value = $" - {todo.Title}: {(todo.Finished ? "Finished" : "Active")}"
+                Value = " - " + todo.Title + ": " + (todo.Finished ? "Finished" : "Active")
             }
         };
     }
@@ -147,11 +150,11 @@ In the end it all boils down to: Somehow the state should be updated.
 After updating the state UniMob will take care of the rest in an efficient, glitch-free manner. So simple statements, like below, are enough to automatically update the user interface.
 
 ```csharp
-store.Todos = store.Todos
+todoList.Todos = todoList.Todos
     .Append(new Todo("Get Coffee"))
     .Append(new Todo("Write simpler code"))
     .ToArray();
-store.Todos[0].Finished = true;
+todoList.Todos[0].Finished = true;
 ```
 
 ## How to Install
