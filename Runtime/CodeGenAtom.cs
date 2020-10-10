@@ -4,7 +4,7 @@ namespace UniMob
     {
         public static ComputedAtom<T> Create<T>(string debugName, AtomPull<T> pull)
         {
-            return new ComputedAtom<T>(debugName, pull, null);
+            return new ComputedAtom<T>(debugName, pull);
         }
     }
 }

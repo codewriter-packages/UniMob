@@ -9,7 +9,7 @@ using Unity.CompilationPipeline.Common.Diagnostics;
 
 namespace UniMob.Editor.Weaver
 {
-    public class AtomWeaverV2
+    internal class AtomWeaverV2
     {
         private const string ValuePropertyName = nameof(ComputedAtom<int>.Value);
         private const string ConstructorName = ".ctor";

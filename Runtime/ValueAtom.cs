@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 
 namespace UniMob
 {
-    public class ValueAtom<T> : AtomBase, MutableAtom<T>
+    internal class ValueAtom<T> : AtomBase, MutableAtom<T>
     {
         private readonly IEqualityComparer<T> _comparer;
         private T _value;

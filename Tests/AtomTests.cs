@@ -78,7 +78,7 @@ namespace UniMob.Tests
             listener.Deactivate();
             Assert.AreEqual("A", activation);
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("AD", activation);
         }
 
@@ -120,7 +120,7 @@ namespace UniMob.Tests
             autoRun.Deactivate();
             Assert.AreEqual("TMS", activation);
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("TMStms", activation);
         }
 
@@ -148,7 +148,7 @@ namespace UniMob.Tests
             modifiedSource.Value = 2;
             Assert.AreEqual("A", activation);
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("A", activation);
 
             autoRun.Deactivate();
@@ -175,7 +175,7 @@ namespace UniMob.Tests
             atom.Value = 2;
             Assert.AreEqual("A", activation);
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("A", activation);
 
             autoRun.Deactivate();
@@ -196,7 +196,7 @@ namespace UniMob.Tests
             var value = 0;
             var atom = Atom.Computed(() => value = 1);
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual(0, value);
 
             atom.Get();
@@ -262,7 +262,7 @@ namespace UniMob.Tests
 
             source.Value = 2;
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("TMTM", actualization);
 
             autoRun.Deactivate();
@@ -283,7 +283,7 @@ namespace UniMob.Tests
             source.Value = 2;
             Assert.AreEqual(3, targetValue);
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual(4, targetValue);
         }
 
@@ -331,7 +331,7 @@ namespace UniMob.Tests
             Assert.Throws<Exception>(() => middle.Get());
 
             source.Value = 1;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
 
             Assert.AreEqual(2, middle.Value);
         }
@@ -350,12 +350,12 @@ namespace UniMob.Tests
                 actualization += "T";
             });
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("T", actualization);
 
             source.Invalidate();
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("TT", actualization);
 
             dispose.Deactivate();
@@ -375,13 +375,13 @@ namespace UniMob.Tests
             Assert.AreEqual(1, runs);
 
             source.Value++;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
 
             Assert.AreEqual(2, runs);
 
             disposer.Deactivate();
             source.Value++;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual(2, runs);
         }
 
@@ -394,19 +394,19 @@ namespace UniMob.Tests
 
             Atom.When(() => source.Value > 1, () => watch += "B");
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("", watch);
 
             source.Value = 1;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("", watch);
 
             source.Value = 2;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("B", watch);
 
             source.Value = 3;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual("B", watch);
         }
 
@@ -421,8 +421,8 @@ namespace UniMob.Tests
             var errors = 0;
 
             Atom.Reaction(
-                pull: () => middle.Value,
-                reaction: (value, disposable) =>
+                reaction: () => middle.Value,
+                effect: (value, disposable) =>
                 {
                     result = value;
                     if (value == 2) disposable.Deactivate();
@@ -432,19 +432,19 @@ namespace UniMob.Tests
             Assert.AreEqual(0, result);
 
             source.Value = 1;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual(1, result);
 
             source.Value = -1;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual(1, errors);
 
             source.Value = 2;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual(2, result);
 
             source.Value = 3;
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual(2, result);
         }
 
@@ -537,11 +537,11 @@ namespace UniMob.Tests
             Assert.AreEqual(1, runs);
             Assert.AreEqual(1, source.Value);
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual(2, runs);
             Assert.AreEqual(2, source.Value);
 
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
             Assert.AreEqual(3, runs);
             Assert.AreEqual(3, source.Value);
 

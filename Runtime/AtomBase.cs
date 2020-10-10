@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using UnityEngine.Assertions;
 
 namespace UniMob
 {
@@ -133,8 +132,7 @@ namespace UniMob
                 Evaluate();
             }
 
-            var popped = Stack.Pop();
-            Assert.AreEqual(this, popped);
+            Stack.Pop();
         }
 
         protected abstract void Evaluate();

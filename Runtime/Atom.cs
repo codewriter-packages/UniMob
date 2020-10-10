@@ -1,11 +1,44 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace UniMob
 {
-    public static class Atom
+    public static partial class Atom
     {
+        public static AtomBase CurrentScope => AtomBase.Stack.Peek();
+
+        /// <summary>
+        /// Creates a scope which blocks changes propagation. <br/>
+        /// <br/>
+        /// Must only be used in using statement.
+        /// </summary>
+        /// <example>
+        /// 
+        /// using(Atom.NoWatch)
+        /// {
+        ///     // ...
+        /// }
+        /// 
+        /// </example>
+        public static IDisposable NoWatch => WatchScope.Enter();
+
+        /// <summary>
+        /// Creates an atom that store the value.
+        /// </summary>
+        /// <param name="value">Initial value.</param>
+        /// <param name="callbacks">Atom lifetime callbacks.</param>
+        /// <param name="comparer">Value comparer used for reconciling.</param>
+        /// <param name="debugName">Debug name for this atom.</param>
+        /// <typeparam name="T">Atom value type.</typeparam>
+        /// <returns>Created atom.</returns>
+        /// <example>
+        ///
+        /// var counter = Atom.Value();
+        /// counter.Value += 1;
+        ///
+        /// Debug.Log(counter.Value);
+        /// 
+        /// </example>
         public static MutableAtom<T> Value<T>(
             T value,
             IAtomCallbacks callbacks = null,
@@ -15,20 +48,41 @@ namespace UniMob
             return new ValueAtom<T>(debugName, value, callbacks, comparer);
         }
 
+        /// <summary>
+        /// Creates an atom that compute its value by a function.<br/>
+        /// </summary>
+        /// <remarks>
+        /// Computed values can be used to derive information from other atoms.
+        /// They evaluate lazily, caching their output and only recomputing
+        /// if one of the underlying atoms has changed. If they are not observed
+        /// by anything, they suspend entirely.<br/>
+        /// <br/>
+        /// Conceptually, they are very similar to formulas in spreadsheets,
+        /// and can't be underestimated. They help in reducing the amount of state
+        /// you have to store and are highly optimized. Use them wherever possible.
+        /// </remarks>
+        /// <param name="pull">Function for pulling value.</param>
+        /// <param name="push">Function for pushing new value.</param>
+        /// <param name="keepAlive">Should an atom keep its value cached when there are no subscribers?</param>
+        /// <param name="requiresReaction">Should an atom print warnings when its values are tried to be read outside of the reaction?</param>
+        /// <param name="callbacks">Atom lifetime callbacks.</param>
+        /// <param name="comparer">Value comparer used for reconciling.</param>
+        /// <param name="debugName">Debug name for this atom.</param>
+        /// <typeparam name="T">Atom value type.</typeparam>
+        /// <returns>Created atom.</returns>
+        /// <example>
+        ///
+        /// var a = Atom.Value(1);
+        /// var b = Atom.Value(2);
+        ///
+        /// var sum = Atom.Computed(() => a.Value + b.Value);
+        ///
+        /// Debug.Log(sum.Value);
+        /// 
+        /// </example>
         public static Atom<T> Computed<T>(
             AtomPull<T> pull,
-            bool keepAlive = false,
-            bool requiresReaction = false,
-            IAtomCallbacks callbacks = null,
-            IEqualityComparer<T> comparer = null,
-            string debugName = null)
-        {
-            return new ComputedAtom<T>(debugName, pull, null, keepAlive, requiresReaction, callbacks, comparer);
-        }
-
-        public static MutableAtom<T> Computed<T>(
-            AtomPull<T> pull,
-            AtomPush<T> push,
+            AtomPush<T> push = null,
             bool keepAlive = false,
             bool requiresReaction = false,
             IAtomCallbacks callbacks = null,
@@ -38,144 +92,21 @@ namespace UniMob
             return new ComputedAtom<T>(debugName, pull, push, keepAlive, requiresReaction, callbacks, comparer);
         }
 
-        public static Reaction Reaction<T>(
-            AtomPull<T> pull,
-            Action<T, Reaction> reaction,
-            IEqualityComparer<T> comparer = null,
-            bool fireImmediately = true,
-            Action<Exception> exceptionHandler = null,
-            string debugName = null)
-        {
-            var valueAtom = Computed(pull, comparer: comparer);
-            bool firstRun = true;
-
-            Reaction atom = null;
-            atom = new ReactionAtom(debugName, () =>
-            {
-                var value = valueAtom.Value;
-
-                using (NoWatch)
-                {
-                    if (firstRun)
-                    {
-                        firstRun = false;
-
-                        if (!fireImmediately)
-                            return;
-                    }
-
-                    // ReSharper disable once AccessToModifiedClosure
-                    reaction(value, atom);
-                }
-            }, exceptionHandler);
-
-            atom.Activate();
-            return atom;
-        }
-
-        public static Reaction Reaction<T>(
-            AtomPull<T> pull,
-            Action<T> reaction,
-            IEqualityComparer<T> comparer = null,
-            bool fireImmediately = true,
-            Action<Exception> exceptionHandler = null,
-            string debugName = null)
-        {
-            return Reaction(pull, (value, _) => reaction(value), comparer, fireImmediately,
-                exceptionHandler, debugName);
-        }
-
-        public static Reaction Reaction(
-            Action reaction,
-            Action<Exception> exceptionHandler = null,
-            string debugName = null)
-        {
-            var atom = new ReactionAtom(debugName, reaction, exceptionHandler);
-            atom.Activate();
-            return atom;
-        }
-
-        private static readonly WatchScope NoWatchInstance = new WatchScope();
-
-        public static IDisposable NoWatch
-        {
-            get
-            {
-                NoWatchInstance.Enter();
-                return NoWatchInstance;
-            }
-        }
-
-        public static AtomBase CurrentScope => AtomBase.Stack.Peek();
-
         private class WatchScope : IDisposable
         {
-            public void Enter()
+            private static readonly WatchScope Instance = new WatchScope();
+
+            public static IDisposable Enter()
             {
                 AtomBase.Stack.Push(null);
+
+                return Instance;
             }
 
             public void Dispose()
             {
                 AtomBase.Stack.Pop();
             }
-        }
-
-        /// <summary>
-        /// Invokes callback when condition becomes True.
-        /// If condition throw exception, invoke exceptionHandler.
-        /// </summary>
-        /// <param name="debugName">Atom debug name</param>
-        /// <param name="cond">Watched condition</param>
-        /// <param name="callback">Value handler</param>
-        /// <param name="exceptionHandler">Exception handler</param>
-        /// <returns>Disposable for cancel watcher</returns>
-        public static Reaction When(
-            Func<bool> cond, Action callback,
-            Action<Exception> exceptionHandler = null,
-            string debugName = null)
-        {
-            Reaction watcher = null;
-            return watcher = Reaction(() =>
-            {
-                Exception exception = null;
-                try
-                {
-                    if (!cond()) return;
-                }
-                catch (Exception e)
-                {
-                    exception = e;
-                }
-
-                if (exception != null && exceptionHandler == null)
-                {
-                    return;
-                }
-
-                using (NoWatch)
-                {
-                    if (exception != null) exceptionHandler(exception);
-                    else callback();
-
-                    // ReSharper disable once AccessToModifiedClosure
-                    watcher?.Deactivate();
-                    watcher = null;
-                }
-            }, debugName: debugName);
-        }
-
-        public static Task When(Func<bool> cond, string debugName = null)
-        {
-            var tcs = new TaskCompletionSource<object>();
-
-            Atom.When(cond,
-                () => tcs.TrySetResult(null),
-                exception => tcs.TrySetException(exception),
-                debugName
-            );
-
-            return tcs.Task;
         }
     }
 }

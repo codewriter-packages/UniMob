@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace UniMob
 {
-    public class ReactionAtom : AtomBase, Reaction
+    internal class ReactionAtom : AtomBase, Reaction
     {
         private readonly Action _reaction;
         private readonly Action<Exception> _exceptionHandler;

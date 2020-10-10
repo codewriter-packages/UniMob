@@ -4,11 +4,6 @@ namespace UniMob.Tests
 {
     public static class AtomTestUtil
     {
-        public static void Sync()
-        {
-            AtomScheduler.Sync();
-        }
-        
         public static int SubscribersCount<T>(this Atom<T> atom)
         {
             if (atom is AtomBase atomBase)

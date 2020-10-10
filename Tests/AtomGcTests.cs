@@ -32,7 +32,7 @@ namespace UniMob.Tests
             Assert.AreEqual(1, target.SubscribersCount());
 
             run.Deactivate();
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
 
             Assert.AreEqual(0, source.SubscribersCount());
             Assert.AreEqual(0, middle.SubscribersCount());
@@ -53,14 +53,14 @@ namespace UniMob.Tests
             Assert.AreEqual(1, target.SubscribersCount());
 
             run.Deactivate();
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
 
             Assert.AreEqual(1, source.SubscribersCount());
             Assert.AreEqual(0, middle.SubscribersCount());
             Assert.AreEqual(0, target.SubscribersCount());
 
             middle.Deactivate();
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
 
             Assert.AreEqual(0, source.SubscribersCount());
         }
@@ -79,12 +79,12 @@ namespace UniMob.Tests
             Assert.AreEqual(2, middle.SubscribersCount());
 
             run1.Deactivate();
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
 
             Assert.AreEqual(1, middle.SubscribersCount());
 
             run2.Deactivate();
-            AtomTestUtil.Sync();
+            AtomScheduler.Sync();
 
             Assert.AreEqual(0, middle.SubscribersCount());
         }

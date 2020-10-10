@@ -6,11 +6,12 @@ namespace UniMob
 {
     public class AtomScheduler : MonoBehaviour
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private static readonly CustomSampler ProfilerSampler = CustomSampler.Create("UniMob.Sync");
-
+#endif
         private static Queue<AtomBase> _updatingCurrentFrame = new Queue<AtomBase>();
         private static Queue<AtomBase> _updatingNextFrame = new Queue<AtomBase>();
-        private static readonly Queue<AtomBase> Reaping = new Queue<AtomBase>();
+        private static Queue<AtomBase> _reaping = new Queue<AtomBase>();
 
         private static AtomScheduler _current;
         private static bool _dirty;
@@ -35,6 +36,7 @@ namespace UniMob
             if (ReferenceEquals(_current, null) && Application.isPlaying)
             {
                 var go = new GameObject(nameof(AtomScheduler));
+                go.hideFlags = HideFlags.HideAndDontSave;
                 _current = go.AddComponent<AtomScheduler>();
                 DontDestroyOnLoad(_current);
             }
@@ -44,7 +46,7 @@ namespace UniMob
         {
             _dirty = true;
             atom.Reaping = true;
-            Reaping.Enqueue(atom);
+            _reaping.Enqueue(atom);
         }
 
         internal static void Unreap(AtomBase atom)
@@ -52,10 +54,11 @@ namespace UniMob
             atom.Reaping = false;
         }
 
-        internal static void Sync()
+        public static void Sync()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilerSampler.Begin();
-
+#endif
             var toSwap = _updatingCurrentFrame;
             _updatingCurrentFrame = _updatingNextFrame;
             _updatingNextFrame = toSwap;
@@ -70,16 +73,18 @@ namespace UniMob
                 }
             }
 
-            while (Reaping.Count > 0)
+            while (_reaping.Count > 0)
             {
-                var atom = Reaping.Dequeue();
+                var atom = _reaping.Dequeue();
                 if (atom.Reaping && atom.Subscribers == null)
                 {
                     atom.Deactivate();
                 }
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilerSampler.End();
+#endif
         }
     }
 }
