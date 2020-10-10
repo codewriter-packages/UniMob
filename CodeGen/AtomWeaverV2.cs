@@ -15,6 +15,7 @@ namespace UniMob.Editor.Weaver
         private const string ConstructorName = ".ctor";
         private const string DirectEvaluateMethodName = nameof(ComputedAtom<int>.DirectEvaluate);
         private const string CompAndInvalidateMethodName = nameof(ComputedAtom<int>.CompareAndInvalidate);
+        private const string CreateAtomMethodName = nameof(CodeGenAtom.Create);
 
         private List<DiagnosticMessage> _diagnosticMessages = new List<DiagnosticMessage>();
 
@@ -22,7 +23,7 @@ namespace UniMob.Editor.Weaver
 
         private TypeReference _atomType;
 
-        private MethodReference _atomCtorMethod;
+        private MethodReference _atomCreateMethod;
         private MethodReference _atomGetValueMethod;
         private MethodReference _atomDirectEvalMethod;
         private MethodReference _atomCompAndInvalidateMethod;
@@ -55,10 +56,11 @@ namespace UniMob.Editor.Weaver
 
             var atomTypeDef = _atomType.Resolve();
             var atomPullDef = _module.ImportReference(typeof(AtomPull<>)).Resolve();
+            var atomFactoryDef = _module.ImportReference(typeof(CodeGenAtom)).Resolve();
 
             _atomGetValueMethod = _module.ImportReference(atomTypeDef.FindProperty(ValuePropertyName).GetMethod);
 
-            _atomCtorMethod = _module.ImportReference(atomTypeDef.FindMethod(ConstructorName, 2));
+            _atomCreateMethod = _module.ImportReference(atomFactoryDef.FindMethod(CreateAtomMethodName, 2));
             _atomDirectEvalMethod = _module.ImportReference(atomTypeDef.FindMethod(DirectEvaluateMethodName, 0));
             _atomCompAndInvalidateMethod =
                 _module.ImportReference(atomTypeDef.FindMethod(CompAndInvalidateMethodName, 1));
@@ -134,7 +136,7 @@ namespace UniMob.Editor.Weaver
             private Instruction _directEvalEndInstruction;
             private Instruction _loadResultInstruction;
 
-            private MethodReference _atomCtorMethod;
+            private MethodReference _atomCreateMethod;
             private MethodReference _atomPullCtorMethod;
             private MethodReference _tryEnterMethod;
             private MethodReference _atomGetMethod;
@@ -152,7 +154,7 @@ namespace UniMob.Editor.Weaver
                 _loadResultInstruction = Instruction.Create(OpCodes.Ldloc, _resultVariable);
 
                 var propertyType = property.PropertyType;
-                _atomCtorMethod = Helpers.MakeHostInstanceGeneric(weaver._atomCtorMethod, propertyType);
+                _atomCreateMethod = Helpers.MakeGenericMethod(weaver._atomCreateMethod, propertyType);
                 _atomPullCtorMethod = Helpers.MakeHostInstanceGeneric(weaver._atomPullCtorMethod, propertyType);
                 _tryEnterMethod = Helpers.MakeHostInstanceGeneric(weaver._atomDirectEvalMethod, propertyType);
                 _atomGetMethod = Helpers.MakeHostInstanceGeneric(weaver._atomGetValueMethod, propertyType);
@@ -203,7 +205,7 @@ namespace UniMob.Editor.Weaver
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0)); // getter_method
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldftn, _property.GetMethod));
                 il.Insert(ind++, Instruction.Create(OpCodes.Newobj, _atomPullCtorMethod));
-                il.Insert(ind++, Instruction.Create(OpCodes.Newobj, _atomCtorMethod)); // create atom
+                il.Insert(ind++, Instruction.Create(OpCodes.Call, _atomCreateMethod)); // create atom
                 il.Insert(ind++, Instruction.Create(OpCodes.Stfld, _atomField));
 
                 // end if

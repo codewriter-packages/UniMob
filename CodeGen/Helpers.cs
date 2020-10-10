@@ -52,6 +52,17 @@ namespace UniMob.Editor.Weaver
             return instance;
         }
 
+        public static MethodReference MakeGenericMethod(MethodReference self, TypeReference argument)
+        {
+            if (self.GenericParameters.Count != 1)
+                throw new ArgumentException();
+
+            var instance = new GenericInstanceMethod(self);
+            instance.GenericArguments.Add(argument);
+
+            return instance;
+        }
+        
         public static MethodReference MakeGenericMethod(MethodReference self, params TypeReference[] arguments)
         {
             if (self.GenericParameters.Count != arguments.Length)

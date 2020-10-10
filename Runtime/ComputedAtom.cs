@@ -17,14 +17,6 @@ namespace UniMob
         private ExceptionDispatchInfo _exception;
         private bool _nextDirectEvaluate;
 
-        // for CodeGen
-        public ComputedAtom(
-            string debugName,
-            AtomPull<T> pull)
-            : this(debugName, pull, null)
-        {
-        }
-
         internal ComputedAtom(
             string debugName,
             [NotNull] AtomPull<T> pull,
