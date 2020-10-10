@@ -1,5 +1,7 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace UniMob
 {
@@ -24,7 +26,7 @@ namespace UniMob
             string debugName = null)
         {
             Reaction watcher = null;
-            return watcher = Reaction(() =>
+            watcher = new ReactionAtom(debugName, () =>
             {
                 Exception exception = null;
                 try
@@ -38,19 +40,30 @@ namespace UniMob
 
                 if (exception != null && exceptionHandler == null)
                 {
+                    Debug.LogException(exception);
                     return;
                 }
 
                 using (NoWatch)
                 {
-                    if (exception != null) exceptionHandler(exception);
-                    else sideEffect();
+                    if (exception != null)
+                    {
+                        exceptionHandler(exception);
+                    }
+                    else
+                    {
+                        sideEffect();
+                    }
 
                     // ReSharper disable once AccessToModifiedClosure
                     watcher?.Deactivate();
                     watcher = null;
                 }
-            }, debugName: debugName);
+            });
+
+            watcher.Activate();
+
+            return watcher;
         }
 
         /// <summary>
@@ -61,19 +74,71 @@ namespace UniMob
         /// The task will fail if the predicate throws an exception.
         /// </summary>
         /// <param name="p">An observed predicate function.</param>
+        /// <param name="cancellationToken">Token for reaction cancellation.</param>
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <returns>Task that completes when the predicate returns true or predicate function throws exception.</returns>
-        public static Task When(Func<bool> p, string debugName = null)
+        public static Task When(
+            Func<bool> p,
+            CancellationToken cancellationToken = default,
+            string debugName = null)
         {
-            var tcs = new TaskCompletionSource<object>();
+            var taskCompletionSource = new TaskCompletionSource<object>();
 
-            Atom.When(p,
-                () => tcs.TrySetResult(null),
-                exception => tcs.TrySetException(exception),
-                debugName
-            );
+            Reaction watcher = null;
+            CancellationTokenRegistration? cancellationTokenRegistration = null;
 
-            return tcs.Task;
+            void Dispose()
+            {
+                taskCompletionSource.TrySetCanceled();
+                // ReSharper disable once AccessToModifiedClosure
+                cancellationTokenRegistration?.Dispose();
+                // ReSharper disable once AccessToModifiedClosure
+                watcher?.Deactivate();
+                watcher = null;
+            }
+
+            watcher = new ReactionAtom(debugName, () =>
+            {
+                Exception exception = null;
+                try
+                {
+                    if (!p()) return;
+                }
+                catch (Exception e)
+                {
+                    exception = e;
+                }
+
+                using (NoWatch)
+                {
+                    if (exception != null)
+                    {
+                        taskCompletionSource.TrySetException(exception);
+                    }
+                    else
+                    {
+                        taskCompletionSource.TrySetResult(null);
+                    }
+
+                    Dispose();
+                }
+            });
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Dispose();
+            }
+            else
+            {
+                watcher.Activate();
+
+                if (cancellationToken.CanBeCanceled)
+                {
+                    cancellationTokenRegistration = cancellationToken.Register(Dispose, true);
+                }
+            }
+
+            return taskCompletionSource.Task;
         }
     }
 }
