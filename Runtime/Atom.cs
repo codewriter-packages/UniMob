@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace UniMob
 {
     public static partial class Atom
     {
-        public static AtomBase CurrentScope => AtomBase.Stack.Peek();
+        [CanBeNull] public static AtomBase CurrentScope => AtomBase.Stack.Peek();
 
         /// <summary>
         /// Creates a scope which blocks changes propagation. <br/>

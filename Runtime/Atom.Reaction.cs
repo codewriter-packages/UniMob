@@ -14,6 +14,16 @@ namespace UniMob
         /// <param name="exceptionHandler">A function that called when an exception is thrown while computing an reaction.</param>
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <returns>Created reaction.</returns>
+        /// <example>
+        ///
+        /// var counter = Atom.Value(1);
+        ///
+        /// var reaction = Atom.Reaction(() =>
+        /// {
+        ///     Debug.Log("Counter: " + counter.Value);
+        /// });
+        ///
+        /// </example>
         public static Reaction Reaction(
             Action reaction,
             Action<Exception> exceptionHandler = null,
@@ -42,6 +52,23 @@ namespace UniMob
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <typeparam name="T">Reaction data type.</typeparam>
         /// <returns>Created reaction.</returns>
+        /// <example>
+        ///
+        /// var counter = Atom.Value(1);
+        ///
+        /// var reaction = Atom.Reaction(
+        ///     () => counter.Value,
+        ///     (val, reactionHandle) =>
+        ///     {
+        ///         Debug.Log("Counter: " + val);
+        ///         if (val == 10)
+        ///         {
+        ///             reactionHandle.Deactivate();
+        ///         }
+        ///     }
+        /// );
+        /// 
+        /// </example>
         public static Reaction Reaction<T>(
             AtomPull<T> reaction,
             Action<T, Reaction> effect,
@@ -95,6 +122,17 @@ namespace UniMob
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <typeparam name="T">Reaction data type.</typeparam>
         /// <returns>Created reaction.</returns>
+        /// <example>
+        ///
+        /// var counter = Atom.Value(1);
+        ///
+        /// var reaction = Atom.Reaction(
+        ///     () => counter.Value,
+        ///     val => Debug.Log("Counter: " + val)
+        /// );
+        /// 
+        /// </example>
+
         public static Reaction Reaction<T>(
             AtomPull<T> reaction,
             Action<T> effect,

@@ -19,6 +19,16 @@ namespace UniMob
         /// <param name="exceptionHandler">A function that called when an exception is thrown while computing an reaction.</param>
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <returns>Created reaction.</returns>
+        /// <example>
+        ///
+        /// var counter = Atom.Value(1);
+        ///
+        /// var reaction = Atom.When(
+        ///     () => counter.Value == 10,
+        ///     () => Debug.Log("Counter value equals 10")
+        /// );
+        /// 
+        /// </example>
         public static Reaction When(
             Func<bool> p,
             Action sideEffect,
@@ -77,6 +87,14 @@ namespace UniMob
         /// <param name="cancellationToken">Token for reaction cancellation.</param>
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <returns>Task that completes when the predicate returns true or predicate function throws exception.</returns>
+        /// <example>
+        ///
+        /// var counter = Atom.Value(1);
+        ///
+        /// await Atom.When(() => counter.Value == 10);
+        /// Debug.Log("Counter value equals 10");
+        /// 
+        /// </example>
         public static Task When(
             Func<bool> p,
             CancellationToken cancellationToken = default,
