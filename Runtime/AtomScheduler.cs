@@ -36,7 +36,6 @@ namespace UniMob
             if (ReferenceEquals(_current, null) && Application.isPlaying)
             {
                 var go = new GameObject(nameof(AtomScheduler));
-                go.hideFlags = HideFlags.HideAndDontSave;
                 _current = go.AddComponent<AtomScheduler>();
                 DontDestroyOnLoad(_current);
             }
