@@ -548,6 +548,24 @@ namespace UniMob.Tests
             reaction.Deactivate();
         }
 
+        [Test]
+        public void MutableAtomPushNewValue()
+        {
+            var source = 0;
+
+            var medium = Atom.Computed(
+                () => source,
+                val => source = val
+            );
+
+            Assert.AreEqual(0, source);
+            Assert.AreEqual(0, medium.Value);
+
+            medium.Value = 1;
+
+            Assert.AreEqual(1, source);
+            Assert.AreEqual(1, medium.Value);
+        }
 
         class TestComparer<T> : IEqualityComparer<T>
         {
