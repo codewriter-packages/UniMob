@@ -89,29 +89,22 @@ public class TodoListApp : UniMobUIApp
 
     protected override Widget Build(BuildContext context)
     {
-        return new Column
-        {
-            MainAxisSize = AxisSize.Max,
-            CrossAxisSize = AxisSize.Max,
-            Children =
-            {
-                todoList.Todos.Select(todo => BuildTodo(todo)),
-                new UniMobText(WidgetSize.FixedHeight(60))
-                {
+        return new Column {
+            Children = {
+                new UniMobText(WidgetSize.FixedHeight(60)) {
                     Value = "Tasks left: " + todoList.UnfinishedTodoCount
-                }
+                },
+                todoList.Todos.Select(todo => BuildTodo(todo))
             }
         };
     }
 
     private Widget BuildTodo(Todo todo)
     {
-        return new UniMobButton
-        {
+        return new UniMobButton {
             OnClick = () => todo.Finished = !todo.Finished,
-            Child = new UniMobText(WidgetSize.FixedHeight(60))
-            {
-                Value = " - " + todo.Title + ": " + (todo.Finished ? "Finished" : "Active")
+            Child = new UniMobText(WidgetSize.FixedHeight(60)) {
+                Value = todo.Title + ": " + (todo.Finished ? "Finished" : "Active")
             }
         };
     }
@@ -125,9 +118,8 @@ Custom reactions can simply be created using the `Reaction` or `When` methods to
 For example the following `Reaction` prints a log message each time the amount of `UnfinishedTodoCount` changes:
 
 ```csharp
-Atom.Reaction(() =>
-{
-    Debug.Log($"Tasks left: " + UnfinishedTodoCount);
+Atom.Reaction(() => {
+    Debug.Log("Tasks left: " + todoList.UnfinishedTodoCount);
 });
 ```
 
