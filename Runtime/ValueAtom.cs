@@ -33,19 +33,14 @@ namespace UniMob
             }
             set
             {
-                try
+                using (Atom.NoWatch)
                 {
-                    using (Atom.NoWatch)
-                    {
-                        if (_comparer.Equals(value, _value))
-                            return;
+                    if (_comparer.Equals(value, _value))
+                        return;
 
-                        State = AtomState.Actual;
-                        _value = value;
-                    }
-                }
-                finally
-                {
+                    State = AtomState.Actual;
+                    _value = value;
+
                     ObsoleteSubscribers();
                 }
             }
