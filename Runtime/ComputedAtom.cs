@@ -84,8 +84,8 @@ namespace UniMob
                     }
                 }
 
-                Actualize();
                 SubscribeToParent();
+                Actualize();
 
                 if (_exception != null)
                 {

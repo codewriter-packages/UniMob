@@ -27,8 +27,9 @@ namespace UniMob
                     return _value;
                 }
 
-                Actualize();
                 SubscribeToParent();
+                Actualize();
+
                 return _value;
             }
             set
@@ -49,8 +50,6 @@ namespace UniMob
         protected override void Evaluate()
         {
             State = AtomState.Actual;
-
-            ObsoleteSubscribers();
         }
 
         public void Invalidate()
