@@ -123,6 +123,8 @@ namespace UniMob
 
         protected override void Evaluate()
         {
+            bool changed;
+
             try
             {
                 State = AtomState.Pulling;
@@ -136,12 +138,16 @@ namespace UniMob
                         return;
                 }
 
+                changed = _hasCache || _exception != null;
+
                 _hasCache = true;
                 _cache = value;
                 _exception = null;
             }
             catch (Exception exception)
             {
+                changed = true;
+
                 _hasCache = false;
                 _cache = default;
                 _exception = ExceptionDispatchInfo.Capture(exception);
@@ -152,7 +158,10 @@ namespace UniMob
                 _nextDirectEvaluate = false;
             }
 
-            ObsoleteSubscribers();
+            if (changed)
+            {
+                ObsoleteSubscribers();
+            }
         }
 
         public void Invalidate()

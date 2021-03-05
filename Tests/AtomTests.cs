@@ -449,6 +449,22 @@ namespace UniMob.Tests
         }
 
         [Test]
+        public void ReactionUpdatesOnce()
+        {
+            var source = Atom.Value(0);
+
+            var watch = "";
+            var reaction = Atom.Reaction(() => source.Value, v => watch += "B");
+
+            Assert.AreEqual("B", watch);
+
+            AtomScheduler.Sync();
+            Assert.AreEqual("B", watch);
+
+            reaction.Deactivate();
+        }
+
+        [Test]
         public void UnwatchedPullOfObsoleteActiveAtom()
         {
             var source = Atom.Value(0);
