@@ -100,6 +100,19 @@ namespace UniMob.Editor.Weaver
             return type.Methods.Single(m => m.Name == name && m.Parameters.Count == parametersCount);
         }
 
+        public static T GetArgumentValueOrDefault<T>(this CustomAttribute attr, string name, T defaultValue)
+        {
+            foreach (var arg in attr.Properties)
+            {
+                if (arg.Name == name)
+                {
+                    return (T) arg.Argument.Value;
+                }
+            }
+
+            return defaultValue;
+        }
+
         public static PropertyDefinition FindProperty(this TypeDefinition type, string name)
         {
             return type.Properties.Single(p => p.Name == name);

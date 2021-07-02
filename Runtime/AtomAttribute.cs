@@ -8,5 +8,14 @@ namespace UniMob
     [AttributeUsage(AttributeTargets.Property)]
     public class AtomAttribute : Attribute
     {
+        /// <summary>
+        /// Should an atom keep its value cached when there are no subscribers?
+        /// </summary>
+        public bool KeepAlive { get; set; }
+        
+        /// <summary>
+        /// Should an atom print warnings when its values are tried to be read outside of the reaction?
+        /// </summary>
+        public bool RequireReaction { get; set; }
     }
 }
