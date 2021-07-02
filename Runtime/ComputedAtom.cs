@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using JetBrains.Annotations;
+using UnityEngine;
 
 namespace UniMob
 {
@@ -180,8 +181,7 @@ namespace UniMob
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (_requiresReaction)
             {
-                throw new InvalidOperationException(
-                    $"[UniMob] Computed value is read outside a reactive context");
+                Debug.LogError($"[UniMob] Computed value is read outside a reactive context: {this}");
             }
 #endif
         }
