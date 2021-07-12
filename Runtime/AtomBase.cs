@@ -22,6 +22,7 @@ namespace UniMob
         public bool KeepAlive => _keepAlive;
         public bool IsActive => _active;
         public int SubscribersCount => _subscribers?.Count ?? 0;
+        public string DebugName => _debugName;
 
         internal bool Reaping
         {
@@ -73,6 +74,7 @@ namespace UniMob
             {
                 _active = false;
                 _callbacks?.OnInactive();
+                AtomRegistry.OnInactivate(this);
             }
 
             State = AtomState.Obsolete;
@@ -94,6 +96,7 @@ namespace UniMob
             {
                 _active = true;
                 _callbacks?.OnActive();
+                AtomRegistry.OnActivate(this);
             }
 
             if (!force && State == AtomState.Checking)
