@@ -32,6 +32,8 @@ namespace UniMob.Editor.Weaver
 
         private MethodReference _atomPullCtorMethod;
 
+        private bool generateDebugNames;
+
         public List<DiagnosticMessage> Weave(AssemblyDefinition assembly, out bool didAnyChange)
         {
             Prepare(assembly);
@@ -52,6 +54,8 @@ namespace UniMob.Editor.Weaver
 
         private void Prepare(AssemblyDefinition assembly)
         {
+            generateDebugNames = Helpers.GetCustomAttribute<AtomGenerateDebugNamesAttribute>(assembly) != null;
+            
             _module = assembly.MainModule;
 
             _atomType = _module.ImportReference(typeof(ComputedAtom<>));
@@ -178,7 +182,9 @@ namespace UniMob.Editor.Weaver
                 _options = options;
                 _property = property;
 
-                _atomDebugName = $"{property.DeclaringType.FullName}::{property.Name}";
+                _atomDebugName = weaver.generateDebugNames
+                    ? $"{property.DeclaringType.FullName}::{property.Name}"
+                    : null;
                 _resultVariable = new VariableDefinition(property.PropertyType);
 
                 _nullCheckEndInstruction = Instruction.Create(OpCodes.Nop);
@@ -233,7 +239,9 @@ namespace UniMob.Editor.Weaver
 
                 // atom = new ComputedAtom<int>("name", get_atom);
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0));
-                il.Insert(ind++, Instruction.Create(OpCodes.Ldstr, _atomDebugName)); // debugName
+                il.Insert(ind++, _atomDebugName != null
+                    ? Instruction.Create(OpCodes.Ldstr, _atomDebugName)
+                    : Instruction.Create(OpCodes.Ldnull)); // debugName
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0)); // getter_method
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldftn, _property.GetMethod));
                 il.Insert(ind++, Instruction.Create(OpCodes.Newobj, _atomPullCtorMethod));

@@ -18,4 +18,9 @@ namespace UniMob
         /// </summary>
         public bool RequireReaction { get; set; }
     }
+
+    [AttributeUsage(AttributeTargets.Assembly)]
+    public class AtomGenerateDebugNamesAttribute : Attribute
+    {
+    }
 }
