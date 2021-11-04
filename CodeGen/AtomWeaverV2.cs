@@ -78,6 +78,30 @@ namespace UniMob.Editor.Weaver
                 return false;
             }
 
+            if (!property.DeclaringType.IsClass || property.DeclaringType.IsValueType)
+            {
+                _diagnosticMessages.Add(UserError.AtomAttributeCanBeUsedOnlyOnClassMembers(property));
+                return false;
+            }
+
+            if (property.GetMethod == null)
+            {
+                _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnSetOnlyProperty(property));
+                return false;
+            }
+
+            if (property.GetMethod.IsStatic)
+            {
+                _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnStaticProperty(property));
+                return false;
+            }
+            
+            if (property.GetMethod.IsAbstract)
+            {
+                _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnAbstractProperty(property));
+                return false;
+            }
+            
             var atomOptions = new AtomOptions
             {
                 KeepAlive = atomAttribute.GetArgumentValueOrDefault(KeepAliveParameterName, false),
@@ -85,16 +109,7 @@ namespace UniMob.Editor.Weaver
             };
 
             property.CustomAttributes.Remove(atomAttribute);
-
-            if (property.GetMethod == null)
-            {
-                _diagnosticMessages.Add(UserError.MakeWarning("UniMobAtomUselessOnSetOnlyProperties",
-                    $"Atom attribute on set-only property `{property.Name}` don't make sense",
-                    property.SetMethod, null));
-
-                return false;
-            }
-
+            
             FixAutoPropertyBackingField(property);
 
             var atomField = CreateAtomField(property);

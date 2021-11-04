@@ -1,17 +1,46 @@
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Unity.CompilationPipeline.Common.Diagnostics;
+using DType = Unity.CompilationPipeline.Common.Diagnostics.DiagnosticType;
 
 namespace UniMob.Editor.Weaver
 {
     internal static class UserError
     {
-        private static DiagnosticMessage MakeInternal(DiagnosticType type, string errorCode, string messageData,
+        public static DiagnosticMessage AtomAttributeCanBeUsedOnlyOnClassMembers(PropertyDefinition property)
+            => Make(DType.Error, Code(11), $"Atom attribute can be used only on class members", property);
+
+        public static DiagnosticMessage CannotUseAtomAttributeOnSetOnlyProperty(PropertyDefinition property)
+            => Make(DType.Error, Code(21), $"Atom attribute cannot be used on set-only property", property);
+
+        public static DiagnosticMessage CannotUseAtomAttributeOnStaticProperty(PropertyDefinition property)
+            => Make(DType.Error, Code(22), $"Atom attribute cannot be used on static property", property);
+
+        public static DiagnosticMessage CannotUseAtomAttributeOnAbstractProperty(PropertyDefinition property)
+            => Make(DType.Error, Code(23), $"Atom attribute cannot be used on abstract property", property);
+
+        private static string Code(int code)
+        {
+            return "UniMob" + code.ToString().PadLeft(4, '0');
+        }
+
+        private static DiagnosticMessage Make(DiagnosticType type, string errorCode, string messageData,
+            PropertyDefinition property)
+        {
+            return Make(type, errorCode, messageData, property?.GetMethod ?? property?.SetMethod, null);
+        }
+
+        private static DiagnosticMessage Make(DiagnosticType type, string errorCode, string messageData,
             MethodDefinition method, Instruction instruction)
         {
-            var result = new DiagnosticMessage {Column = 0, Line = 0, DiagnosticType = type, File = ""};
-
             var seq = method != null ? Helpers.FindBestSequencePointFor(method, instruction) : null;
+            return Make(type, errorCode, messageData, seq);
+        }
+
+        private static DiagnosticMessage Make(DiagnosticType type, string errorCode, string messageData,
+            SequencePoint seq)
+        {
+            var result = new DiagnosticMessage {Column = 0, Line = 0, DiagnosticType = type, File = ""};
 
             messageData = $"error {errorCode}: {messageData}";
             if (seq != null)
@@ -31,18 +60,6 @@ namespace UniMob.Editor.Weaver
             }
 
             return result;
-        }
-
-        public static DiagnosticMessage MakeError(string errorCode, string messageData, MethodDefinition method,
-            Instruction instruction)
-        {
-            return MakeInternal(DiagnosticType.Error, errorCode, messageData, method, instruction);
-        }
-
-        public static DiagnosticMessage MakeWarning(string errorCode, string messageData, MethodDefinition method,
-            Instruction instruction)
-        {
-            return MakeInternal(DiagnosticType.Warning, errorCode, messageData, method, instruction);
         }
     }
 }
