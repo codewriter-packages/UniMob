@@ -51,7 +51,7 @@ namespace UniMob.Editor.Weaver
             var pdb = new MemoryStream();
             var writerParameters = new WriterParameters
             {
-                SymbolWriterProvider = new PortablePdbWriterProvider(), SymbolStream = pdb, WriteSymbols = true
+                SymbolWriterProvider = new PortablePdbWriterProvider(), SymbolStream = pdb, WriteSymbols = true,
             };
 
             assemblyDefinition.Write(pe, writerParameters);
@@ -72,7 +72,7 @@ namespace UniMob.Editor.Weaver
                 SymbolReaderProvider = new PortablePdbReaderProvider(),
                 AssemblyResolver = resolver,
                 ReflectionImporterProvider = new PostProcessorReflectionImporterProvider(),
-                ReadingMode = ReadingMode.Immediate
+                ReadingMode = ReadingMode.Immediate,
             };
 
             var peStream = new MemoryStream(compiledAssembly.InMemoryAssembly.PeData.ToArray());
@@ -90,7 +90,7 @@ namespace UniMob.Editor.Weaver
         private class PostProcessorAssemblyResolver : IAssemblyResolver
         {
             private readonly string[] _references;
-            Dictionary<string, AssemblyDefinition> _cache = new Dictionary<string, AssemblyDefinition>();
+            private Dictionary<string, AssemblyDefinition> _cache = new Dictionary<string, AssemblyDefinition>();
             private ICompiledAssembly _compiledAssembly;
             private AssemblyDefinition _selfAssembly;
 
@@ -114,18 +114,24 @@ namespace UniMob.Editor.Weaver
                 lock (_cache)
                 {
                     if (name.Name == _compiledAssembly.Name)
+                    {
                         return _selfAssembly;
+                    }
 
                     var fileName = FindFile(name);
                     if (fileName == null)
+                    {
                         return null;
+                    }
 
                     var lastWriteTime = File.GetLastWriteTime(fileName);
 
                     var cacheKey = fileName + lastWriteTime.ToString(CultureInfo.InvariantCulture);
 
                     if (_cache.TryGetValue(cacheKey, out var result))
+                    {
                         return result;
+                    }
 
                     parameters.AssemblyResolver = this;
 
@@ -133,7 +139,9 @@ namespace UniMob.Editor.Weaver
 
                     var pdb = fileName + ".pdb";
                     if (File.Exists(pdb))
+                    {
                         parameters.SymbolStream = MemoryStreamFor(pdb);
+                    }
 
                     var assemblyDefinition = AssemblyDefinition.ReadAssembly(ms, parameters);
                     _cache.Add(cacheKey, assemblyDefinition);
@@ -145,12 +153,16 @@ namespace UniMob.Editor.Weaver
             {
                 var fileName = _references.FirstOrDefault(r => Path.GetFileName(r) == name.Name + ".dll");
                 if (fileName != null)
+                {
                     return fileName;
+                }
 
                 // perhaps the type comes from an exe instead
                 fileName = _references.FirstOrDefault(r => Path.GetFileName(r) == name.Name + ".exe");
                 if (fileName != null)
+                {
                     return fileName;
+                }
 
                 //Unfortunately the current ICompiledAssembly API only provides direct references.
                 //It is very much possible that a postprocessor ends up investigating a type in a directly
@@ -163,7 +175,9 @@ namespace UniMob.Editor.Weaver
                 {
                     var candidate = Path.Combine(parentDir, name.Name + ".dll");
                     if (File.Exists(candidate))
+                    {
                         return candidate;
+                    }
                 }
 
                 return null;
@@ -179,7 +193,9 @@ namespace UniMob.Editor.Weaver
                         byteArray = new byte[fs.Length];
                         var readLength = fs.Read(byteArray, 0, (int) fs.Length);
                         if (readLength != fs.Length)
+                        {
                             throw new InvalidOperationException("File read length is not full length of file.");
+                        }
                     }
 
                     return new MemoryStream(byteArray);
@@ -195,7 +211,10 @@ namespace UniMob.Editor.Weaver
                 catch (IOException)
                 {
                     if (retryCount == 0)
+                    {
                         throw;
+                    }
+
                     Console.WriteLine($"Caught IO Exception, trying {retryCount} more times");
                     Thread.Sleep(waitTime);
                     return Retry(retryCount - 1, waitTime, func);
@@ -230,7 +249,9 @@ namespace UniMob.Editor.Weaver
             public override AssemblyNameReference ImportReference(AssemblyName reference)
             {
                 if (_correctCorlib != null && reference.Name == SystemPrivateCoreLib)
+                {
                     return _correctCorlib;
+                }
 
                 return base.ImportReference(reference);
             }

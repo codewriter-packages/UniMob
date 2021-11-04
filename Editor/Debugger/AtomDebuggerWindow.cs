@@ -138,7 +138,7 @@ namespace UniMob
                 {
                     if (rootsOnly)
                     {
-                        var isRoot = atom.KeepAlive || (atom is Reaction);
+                        var isRoot = atom.KeepAlive || atom is Reaction;
                         return isRoot;
                     }
 

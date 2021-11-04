@@ -13,7 +13,10 @@ namespace UniMob.Editor.Weaver
     {
         public static CustomAttribute GetCustomAttribute<T>(ICustomAttributeProvider instance)
         {
-            if (!instance.HasCustomAttributes) return null;
+            if (!instance.HasCustomAttributes)
+            {
+                return null;
+            }
 
             var attributes = instance.CustomAttributes;
 
@@ -36,18 +39,22 @@ namespace UniMob.Editor.Weaver
 
         public static string UnityEngineDllDirectoryName()
         {
-            string directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
+            var directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
             return directoryName?.Replace(@"file:\", "");
         }
 
         public static TypeReference MakeGenericType(TypeReference self, params TypeReference[] arguments)
         {
             if (self.GenericParameters.Count != arguments.Length)
+            {
                 throw new ArgumentException();
+            }
 
             var instance = new GenericInstanceType(self);
             foreach (var argument in arguments)
+            {
                 instance.GenericArguments.Add(argument);
+            }
 
             return instance;
         }
@@ -55,22 +62,28 @@ namespace UniMob.Editor.Weaver
         public static MethodReference MakeGenericMethod(MethodReference self, TypeReference argument)
         {
             if (self.GenericParameters.Count != 1)
+            {
                 throw new ArgumentException();
+            }
 
             var instance = new GenericInstanceMethod(self);
             instance.GenericArguments.Add(argument);
 
             return instance;
         }
-        
+
         public static MethodReference MakeGenericMethod(MethodReference self, params TypeReference[] arguments)
         {
             if (self.GenericParameters.Count != arguments.Length)
+            {
                 throw new ArgumentException();
+            }
 
             var instance = new GenericInstanceMethod(self);
             foreach (var argument in arguments)
+            {
                 instance.GenericArguments.Add(argument);
+            }
 
             return instance;
         }
@@ -83,14 +96,18 @@ namespace UniMob.Editor.Weaver
                 {
                     HasThis = self.HasThis,
                     ExplicitThis = self.ExplicitThis,
-                    CallingConvention = self.CallingConvention
+                    CallingConvention = self.CallingConvention,
                 };
 
             foreach (var parameter in self.Parameters)
+            {
                 reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
+            }
 
             foreach (var genericParameter in self.GenericParameters)
+            {
                 reference.GenericParameters.Add(new GenericParameter(genericParameter.Name, reference));
+            }
 
             return reference;
         }
@@ -133,30 +150,34 @@ namespace UniMob.Editor.Weaver
             var index = 0;
             while (type.Fields.Any(f => f.Name == name))
             {
-                resultName = name + (++index);
+                resultName = name + ++index;
             }
 
             return resultName;
         }
-        
+
         public static SequencePoint FindBestSequencePointFor(MethodDefinition method, Instruction instruction)
         {
-            var sequencePoints = method.DebugInformation?.GetSequencePointMapping().Values.OrderBy(s => s.Offset).ToList();
+            var sequencePoints = method.DebugInformation?.GetSequencePointMapping().Values.OrderBy(s => s.Offset)
+                .ToList();
             if (sequencePoints == null || !sequencePoints.Any())
+            {
                 return null;
+            }
 
             if (instruction != null)
             {
-                for (int i = 0; i != sequencePoints.Count - 1; i++)
+                for (var i = 0; i != sequencePoints.Count - 1; i++)
                 {
                     if (sequencePoints[i].Offset < instruction.Offset &&
                         sequencePoints[i + 1].Offset > instruction.Offset)
+                    {
                         return sequencePoints[i];
+                    }
                 }
             }
 
             return sequencePoints.FirstOrDefault();
         }
-
     }
 }

@@ -41,7 +41,10 @@ namespace UniMob
                 Exception exception = null;
                 try
                 {
-                    if (!p()) return;
+                    if (!p())
+                    {
+                        return;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -120,7 +123,10 @@ namespace UniMob
                 Exception exception = null;
                 try
                 {
-                    if (!p()) return;
+                    if (!p())
+                    {
+                        return;
+                    }
                 }
                 catch (Exception e)
                 {

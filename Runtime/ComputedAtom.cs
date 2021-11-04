@@ -98,12 +98,16 @@ namespace UniMob
             set
             {
                 if (_push == null)
+                {
                     throw new InvalidOperationException("It is not possible to assign a new value to a readonly Atom");
+                }
 
                 using (Atom.NoWatch)
                 {
                     if (_hasCache && _comparer.Equals(value, _cache))
+                    {
                         return;
+                    }
 
                     Invalidate();
 
@@ -136,7 +140,9 @@ namespace UniMob
                 using (Atom.NoWatch)
                 {
                     if (_hasCache && _comparer.Equals(value, _cache))
+                    {
                         return;
+                    }
                 }
 
                 changed = _hasCache || _exception != null;

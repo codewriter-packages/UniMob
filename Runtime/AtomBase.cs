@@ -88,7 +88,9 @@ namespace UniMob
             }
 
             if (!force && State == AtomState.Actual)
+            {
                 return;
+            }
 
             Stack.Push(this);
 
@@ -101,10 +103,12 @@ namespace UniMob
 
             if (!force && State == AtomState.Checking)
             {
-                for (int i = 0; i < _children.Count; i++)
+                for (var i = 0; i < _children.Count; i++)
                 {
                     if (State != AtomState.Checking)
+                    {
                         break;
+                    }
 
                     _children[i].Actualize();
                 }
@@ -143,7 +147,9 @@ namespace UniMob
         protected void ObsoleteSubscribers()
         {
             if (_subscribers == null)
+            {
                 return;
+            }
 
             for (var i = 0; i < _subscribers.Count; i++)
             {
@@ -185,7 +191,9 @@ namespace UniMob
         private void Obsolete()
         {
             if (State == AtomState.Obsolete)
+            {
                 return;
+            }
 
             State = AtomState.Obsolete;
             CheckSubscribers();
@@ -205,7 +213,9 @@ namespace UniMob
         private void RemoveSubscriber(AtomBase subscriber)
         {
             if (_subscribers == null)
+            {
                 return;
+            }
 
             _subscribers.Remove(subscriber);
 
@@ -256,7 +266,7 @@ namespace UniMob
 
         private static void CreateList(out List<AtomBase> list)
         {
-            list = (ListPool.Count > 0) ? ListPool.Pop() : new List<AtomBase>();
+            list = ListPool.Count > 0 ? ListPool.Pop() : new List<AtomBase>();
         }
 
         private static void DeleteList(ref List<AtomBase> list)

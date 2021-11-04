@@ -78,7 +78,7 @@ namespace UniMob
             string debugName = null)
         {
             var valueAtom = Computed(reaction, comparer: comparer);
-            bool firstRun = true;
+            var firstRun = true;
 
             Reaction atom = null;
             atom = new ReactionAtom(debugName, () =>
@@ -92,7 +92,9 @@ namespace UniMob
                         firstRun = false;
 
                         if (!fireImmediately)
+                        {
                             return;
+                        }
                     }
 
                     // ReSharper disable once AccessToModifiedClosure
@@ -132,7 +134,6 @@ namespace UniMob
         /// );
         /// 
         /// </example>
-
         public static Reaction Reaction<T>(
             AtomPull<T> reaction,
             Action<T> effect,
@@ -142,12 +143,12 @@ namespace UniMob
             string debugName = null)
         {
             return Reaction(
-                reaction: reaction,
-                effect: (value, _) => effect(value),
-                exceptionHandler: exceptionHandler,
-                comparer: comparer,
-                fireImmediately: fireImmediately,
-                debugName: debugName
+                reaction,
+                (value, _) => effect(value),
+                exceptionHandler,
+                comparer,
+                fireImmediately,
+                debugName
             );
         }
     }

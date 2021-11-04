@@ -37,7 +37,9 @@ namespace UniMob
                 using (Atom.NoWatch)
                 {
                     if (_comparer.Equals(value, _value))
+                    {
                         return;
+                    }
 
                     State = AtomState.Actual;
                     _value = value;
