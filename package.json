@@ -2,7 +2,7 @@
   "name": "com.unimob",
   "displayName": "UniMob",
   "description": "Reactive state management for Unity",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "unity": "2019.3",
   "license": "MIT",
   "author": "Vlad Vanifatov (https://github.com/vanifatovvlad)",

@@ -23,7 +23,7 @@ public class Counter : MonoBehaviour
     public Text counterText;
     public Button incrementButton;
 
-    // declare observable property
+    // declare reactive property
     [Atom] private int Counter { get; set; }
 
     private void Start()
@@ -80,7 +80,7 @@ Reactions are similar to a computed value, but instead of producing a new value,
 
 #### UniMob.UI widgets
 
-If you are using [UniMob.UI](https://github.com/codewriter-packages/UniMob.UI), you can use observable state in your widgets. UniMob will make sure the interface are always re-rendered whenever needed.
+If you are using [UniMob.UI](https://github.com/codewriter-packages/UniMob.UI), you can use observable state in your widgets. UniMob will make sure the interface are always re-rendered whenever needed. (See [TodoList sample](https://github.com/codewriter-packages/UniMob.UI-Samples/tree/main/SimpleTodoList) for more info)
 
 ```csharp
 public class TodoListApp : UniMobUIApp
@@ -89,11 +89,8 @@ public class TodoListApp : UniMobUIApp
 
     protected override Widget Build(BuildContext context)
     {
-        return new Column {
+        return new ScrollList {
             Children = {
-                new UniMobText(WidgetSize.FixedHeight(60)) {
-                    Value = "Tasks left: " + todoList.UnfinishedTodoCount
-                },
                 todoList.Todos.Select(todo => BuildTodo(todo))
             }
         };
@@ -101,12 +98,7 @@ public class TodoListApp : UniMobUIApp
 
     private Widget BuildTodo(Todo todo)
     {
-        return new UniMobButton {
-            OnClick = () => todo.Finished = !todo.Finished,
-            Child = new UniMobText(WidgetSize.FixedHeight(60)) {
-                Value = todo.Title + ": " + (todo.Finished ? "Finished" : "Active")
-            }
-        };
+        return new TodoWidget(todo) { Key = Key.Of(todo) };
     }
 }
 ```
