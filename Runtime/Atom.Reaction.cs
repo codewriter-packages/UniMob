@@ -10,26 +10,28 @@ namespace UniMob
         /// It also runs once when you create the reaction itself. It only responds
         /// to changes in observable state, things you have annotated atom.
         /// </summary>
+        /// <param name="lifetime">Reaction lifetime.</param>
         /// <param name="reaction">A function for reaction.</param>
         /// <param name="exceptionHandler">A function that called when an exception is thrown while computing an reaction.</param>
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <returns>Created reaction.</returns>
         /// <example>
-        ///
+        /// 
         /// var counter = Atom.Value(1);
-        ///
+        /// 
         /// var reaction = Atom.Reaction(() =>
         /// {
         ///     Debug.Log("Counter: " + counter.Value);
         /// });
-        ///
+        /// 
         /// </example>
         public static Reaction Reaction(
+            Lifetime lifetime,
             Action reaction,
             Action<Exception> exceptionHandler = null,
             string debugName = null)
         {
-            var atom = new ReactionAtom(debugName, reaction, exceptionHandler);
+            var atom = new ReactionAtom(lifetime, debugName, reaction, exceptionHandler);
             atom.Activate();
             return atom;
         }
@@ -40,10 +42,11 @@ namespace UniMob
         /// as input for the second, effect function. It is important to note that
         /// the side effect only reacts to data that was accessed in the data function,
         /// which might be less than the data that is actually used in the effect function.
-        ///
+        /// 
         /// The typical pattern is that you produce the things you need in your side effect
         /// in the data function, and in that way control more precisely when the effect triggers.
         /// </summary>
+        /// <param name="lifetime">Reaction lifetime.</param>
         /// <param name="reaction">A data function.</param>
         /// <param name="effect">A side effect function.</param>
         /// <param name="exceptionHandler">A function that called when an exception is thrown while computing an reaction.</param>
@@ -53,9 +56,9 @@ namespace UniMob
         /// <typeparam name="T">Reaction data type.</typeparam>
         /// <returns>Created reaction.</returns>
         /// <example>
-        ///
+        /// 
         /// var counter = Atom.Value(1);
-        ///
+        /// 
         /// var reaction = Atom.Reaction(
         ///     () => counter.Value,
         ///     (val, reactionHandle) =>
@@ -70,6 +73,7 @@ namespace UniMob
         /// 
         /// </example>
         public static Reaction Reaction<T>(
+            Lifetime lifetime,
             AtomPull<T> reaction,
             Action<T, Reaction> effect,
             Action<Exception> exceptionHandler = null,
@@ -77,11 +81,11 @@ namespace UniMob
             bool fireImmediately = true,
             string debugName = null)
         {
-            var valueAtom = Computed(reaction, comparer: comparer);
+            var valueAtom = Computed(lifetime, reaction, comparer: comparer);
             var firstRun = true;
 
             Reaction atom = null;
-            atom = new ReactionAtom(debugName, () =>
+            atom = new ReactionAtom(lifetime, debugName, () =>
             {
                 var value = valueAtom.Value;
 
@@ -112,10 +116,11 @@ namespace UniMob
         /// as input for the second, effect function. It is important to note that
         /// the side effect only reacts to data that was accessed in the data function,
         /// which might be less than the data that is actually used in the effect function.
-        ///
+        /// 
         /// The typical pattern is that you produce the things you need in your side effect
         /// in the data function, and in that way control more precisely when the effect triggers.
         /// </summary>
+        /// <param name="lifetime">Reaction lifetime.</param>
         /// <param name="reaction">A data function.</param>
         /// <param name="effect">A side effect function.</param>
         /// <param name="exceptionHandler">A function that called when an exception is thrown while computing an reaction.</param>
@@ -125,9 +130,9 @@ namespace UniMob
         /// <typeparam name="T">Reaction data type.</typeparam>
         /// <returns>Created reaction.</returns>
         /// <example>
-        ///
+        /// 
         /// var counter = Atom.Value(1);
-        ///
+        /// 
         /// var reaction = Atom.Reaction(
         ///     () => counter.Value,
         ///     val => Debug.Log("Counter: " + val)
@@ -135,6 +140,7 @@ namespace UniMob
         /// 
         /// </example>
         public static Reaction Reaction<T>(
+            Lifetime lifetime,
             AtomPull<T> reaction,
             Action<T> effect,
             Action<Exception> exceptionHandler = null,
@@ -143,6 +149,7 @@ namespace UniMob
             string debugName = null)
         {
             return Reaction(
+                lifetime,
                 reaction,
                 (value, _) => effect(value),
                 exceptionHandler,

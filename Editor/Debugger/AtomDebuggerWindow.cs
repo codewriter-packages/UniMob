@@ -104,10 +104,10 @@ namespace UniMob
 
             GUILayout.Label(_selectedAtom.DebugName ?? "[Anonymous]", EditorStyles.largeLabel);
             GUILayout.Label(state, EditorStyles.label);
-            if (_selectedAtom.KeepAlive)
-            {
-                GUILayout.Label("Keep Alive", EditorStyles.boldLabel);
-            }
+            //if (_selectedAtom.KeepAlive)
+            //{
+            //    GUILayout.Label("Keep Alive", EditorStyles.boldLabel);
+            //}
 
             GUILayout.Space(10);
 
@@ -138,7 +138,7 @@ namespace UniMob
                 {
                     if (rootsOnly)
                     {
-                        var isRoot = atom.KeepAlive || atom is Reaction;
+                        var isRoot = /*atom.KeepAlive ||*/ atom is Reaction;
                         return isRoot;
                     }
 

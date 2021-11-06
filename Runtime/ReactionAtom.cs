@@ -9,8 +9,12 @@ namespace UniMob
         private readonly Action<Exception> _exceptionHandler;
         private readonly string _debugName;
 
-        public ReactionAtom(string debugName, Action reaction, Action<Exception> exceptionHandler = null)
-            : base(debugName, true, null)
+        public ReactionAtom(
+            Lifetime lifetime,
+            string debugName,
+            Action reaction,
+            Action<Exception> exceptionHandler = null)
+            : base(lifetime, debugName, AtomOptions.AutoActualize, null)
         {
             _reaction = reaction ?? throw new ArgumentNullException(nameof(reaction));
             _exceptionHandler = exceptionHandler ?? Debug.LogException;

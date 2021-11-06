@@ -5,6 +5,23 @@ namespace UniMob.Tests
 {
     public class AtomWhenTests
     {
+        /*
+        private AtomLifetimeController _lifetimeController;
+        private AtomLifetime _lifetime;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _lifetimeController = new AtomLifetimeController();
+            _lifetime = _lifetimeController.Lifetime;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _lifetimeController.Dispose();
+        }
+        
         [Test]
         public void NormalComplete_DefaultToken()
         {
@@ -18,13 +35,13 @@ namespace UniMob.Tests
             NormalComplete(cts.Token);
             cts.Dispose();
         }
-
+        
         public void NormalComplete(CancellationToken cancellationToken)
         {
-            var atom = Atom.Value(0);
+            var atom = Atom.Value(_lifetime,0);
             var runs = 0;
 
-            var task = Atom.When(() =>
+            var task = Atom.When(_lifetime, () =>
             {
                 runs++;
                 return atom.Value == 1;
@@ -89,5 +106,6 @@ namespace UniMob.Tests
 
             cts.Dispose();
         }
+        */
     }
 }

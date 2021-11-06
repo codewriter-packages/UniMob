@@ -11,7 +11,6 @@ namespace UniMob
 #endif
         private static Queue<AtomBase> _updatingCurrentFrame = new Queue<AtomBase>();
         private static Queue<AtomBase> _updatingNextFrame = new Queue<AtomBase>();
-        private static Queue<AtomBase> _reaping = new Queue<AtomBase>();
 
         private static AtomScheduler _current;
         private static bool _dirty;
@@ -41,18 +40,6 @@ namespace UniMob
             }
         }
 
-        internal static void Reap(AtomBase atom)
-        {
-            _dirty = true;
-            atom.Reaping = true;
-            _reaping.Enqueue(atom);
-        }
-
-        internal static void Unreap(AtomBase atom)
-        {
-            atom.Reaping = false;
-        }
-
         public static void Sync()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -66,18 +53,9 @@ namespace UniMob
             {
                 var atom = _updatingCurrentFrame.Dequeue();
 
-                if (atom.IsActive && !atom.Reaping && atom.State != AtomBase.AtomState.Actual)
+                if (atom.IsActive && atom.State != AtomBase.AtomState.Actual)
                 {
                     atom.Actualize();
-                }
-            }
-
-            while (_reaping.Count > 0)
-            {
-                var atom = _reaping.Dequeue();
-                if (atom.Reaping && atom.Subscribers == null)
-                {
-                    atom.Deactivate();
                 }
             }
 

@@ -8,11 +8,12 @@ namespace UniMob
         private T _value;
 
         internal ValueAtom(
+            Lifetime lifetime,
             string debugName,
             T value,
-            IAtomCallbacks callbacks,
+            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
-            : base(debugName, false, callbacks)
+            : base(lifetime, debugName, AtomOptions.None, callbacks)
         {
             _value = value;
             _comparer = comparer ?? EqualityComparer<T>.Default;
@@ -22,11 +23,6 @@ namespace UniMob
         {
             get
             {
-                if (!IsActive && Stack.Peek() == null && !KeepAlive)
-                {
-                    return _value;
-                }
-
                 SubscribeToParent();
                 Actualize();
 

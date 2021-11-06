@@ -7,13 +7,85 @@ namespace UniMob.Tests
 {
     public class AtomTests
     {
+        private LifetimeController _lifetimeController;
+
+        public Lifetime Lifetime => _lifetimeController.Lifetime;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _lifetimeController = new LifetimeController();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _lifetimeController.Dispose();
+        }
+
         [Test]
-        public void NoActivationWithoutSubscribers()
+        public void InactiveByDefault()
+        {
+            var target = Atom.Computed(Lifetime, () => 1);
+
+            Assert.IsFalse(target.IsActive());
+        }
+
+        [Test]
+        public void ActivationOnUnTrackedRead()
+        {
+            var target = Atom.Computed(Lifetime, () => 1);
+
+            target.Get();
+
+            Assert.IsTrue(target.IsActive());
+        }
+
+        [Test]
+        public void ActivationOnTrackedRead()
+        {
+            var target = Atom.Computed(Lifetime, () => 1);
+
+            Atom.Reaction(Lifetime, () => target.Get());
+
+            Assert.IsTrue(target.IsActive());
+        }
+
+        [Test]
+        public void DeactivationOnLifetimeDispose()
+        {
+            Atom<int> target;
+
+            using (var nested = Lifetime.CreateNested())
+            {
+                target = Atom.Computed(nested.Lifetime, () => 1);
+                target.Get();
+            }
+
+            Assert.IsFalse(target.IsActive());
+        }
+
+        [Test]
+        public void KeepActiveOnUnsubscribe()
+        {
+            var target = Atom.Computed(Lifetime, () => 1);
+
+            using (var nested = Lifetime.CreateNested())
+            {
+                Atom.Reaction(nested.Lifetime, () => target.Get());
+            }
+
+            Assert.IsTrue(target.IsActive());
+        }
+
+        [Test]
+        public void ActivationWithoutSubscribers()
         {
             var runs = "";
             var activation = "";
 
             var atom = Atom.Computed(
+                Lifetime,
                 pull: () =>
                 {
                     runs += "R";
@@ -28,8 +100,8 @@ namespace UniMob.Tests
             atom.Get();
             atom.Get();
             atom.Get();
-            Assert.AreEqual("RRR", runs);
-            Assert.AreEqual("", activation);
+            Assert.AreEqual("R", runs);
+            Assert.AreEqual("A", activation);
         }
 
         [Test]
@@ -38,8 +110,9 @@ namespace UniMob.Tests
             var activation = "";
 
             var atom = Atom.Computed(
+                Lifetime,
                 pull: () => 1,
-                keepAlive: true,
+                //keepAlive: true,
                 callbacks: new ActionAtomCallbacks(
                     onActive: () => activation += "A",
                     onInactive: () => activation += "D"
@@ -56,30 +129,35 @@ namespace UniMob.Tests
         }
 
         [Test]
-        public void AutoActivation()
+        public void AtomInvokesOnActiveCallbackOnFirstActivation()
         {
             var activation = "";
+            var atom = Atom.Computed(Lifetime, () => 1, new ActionAtomCallbacks(
+                onActive: () => activation += "A",
+                onInactive: () => { }
+            ));
+            atom.Get();
+            atom.Get();
+            atom.Get();
 
-            var atom = Atom.Computed(
-                pull: () => 1,
-                callbacks: new ActionAtomCallbacks(
-                    onActive: () => activation += "A",
-                    onInactive: () => activation += "D"
-                )
-            );
-
-            var listener = Atom.Computed(() => atom.Value + 1, keepAlive: true);
-
-            Assert.AreEqual("", activation);
-
-            listener.Get();
             Assert.AreEqual("A", activation);
+        }
 
-            listener.Deactivate();
-            Assert.AreEqual("A", activation);
+        [Test]
+        public void AtomInvokesOnInActiveCallbackOnDeactivation()
+        {
+            var deactivation = "";
 
-            AtomScheduler.Sync();
-            Assert.AreEqual("AD", activation);
+            using (var nested = Lifetime.CreateNested())
+            {
+                var atom = Atom.Computed(nested.Lifetime, () => 1, new ActionAtomCallbacks(
+                    onActive: () => { },
+                    onInactive: () => deactivation += "D"
+                ));
+                atom.Get();
+            }
+
+            Assert.AreEqual("D", deactivation);
         }
 
         [Test]
@@ -87,40 +165,44 @@ namespace UniMob.Tests
         {
             var activation = "";
 
-            var source = Atom.Value(
-                0,
-                callbacks: new ActionAtomCallbacks(
-                    onActive: () => activation += "S",
-                    onInactive: () => activation += "s"
-                )
-            );
+            using (var nested = Lifetime.CreateNested())
+            {
+                var source = Atom.Value(
+                    nested.Lifetime,
+                    0,
+                    callbacks: new ActionAtomCallbacks(
+                        onActive: () => activation += "S",
+                        onInactive: () => activation += "s"
+                    )
+                );
 
-            var middle = Atom.Computed(
-                () => source.Value + 1,
-                callbacks: new ActionAtomCallbacks(
-                    onActive: () => activation += "M",
-                    onInactive: () => activation += "m"
-                )
-            );
+                var middle = Atom.Computed(
+                    nested.Lifetime,
+                    () => source.Value + 1,
+                    callbacks: new ActionAtomCallbacks(
+                        onActive: () => activation += "M",
+                        onInactive: () => activation += "m"
+                    )
+                );
 
-            var target = Atom.Computed(
-                () => middle.Value + 1,
-                callbacks: new ActionAtomCallbacks(
-                    onActive: () => activation += "T",
-                    onInactive: () => activation += "t"
-                )
-            );
+                var target = Atom.Computed(
+                    nested.Lifetime,
+                    () => middle.Value + 1,
+                    callbacks: new ActionAtomCallbacks(
+                        onActive: () => activation += "T",
+                        onInactive: () => activation += "t"
+                    )
+                );
 
-            target.Get();
-            Assert.AreEqual("", activation);
+                using (var nested2 = Lifetime.CreateNested())
+                {
+                    Atom.Reaction(nested2.Lifetime, () => target.Get());
+                    Assert.AreEqual("TMS", activation);
+                }
 
-            var autoRun = Atom.Reaction(() => target.Get());
-            Assert.AreEqual("TMS", activation);
+                Assert.AreEqual("TMS", activation);
+            }
 
-            autoRun.Deactivate();
-            Assert.AreEqual("TMS", activation);
-
-            AtomScheduler.Sync();
             Assert.AreEqual("TMStms", activation);
         }
 
@@ -130,6 +212,7 @@ namespace UniMob.Tests
             var activation = "";
 
             var activationSource = Atom.Computed(
+                Lifetime,
                 pull: () => 1,
                 callbacks: new ActionAtomCallbacks(
                     onActive: () => activation += "A",
@@ -137,12 +220,12 @@ namespace UniMob.Tests
                 )
             );
 
-            var modifiedSource = Atom.Value(1);
-            var listener = Atom.Computed(() => activationSource.Value + modifiedSource.Value);
+            var modifiedSource = Atom.Value(Lifetime, 1);
+            var listener = Atom.Computed(Lifetime, () => activationSource.Value + modifiedSource.Value);
 
             Assert.AreEqual("", activation);
 
-            var autoRun = Atom.Reaction(() => listener.Get());
+            var autoRun = Atom.Reaction(Lifetime, () => listener.Get());
             Assert.AreEqual("A", activation);
 
             modifiedSource.Value = 2;
@@ -160,6 +243,7 @@ namespace UniMob.Tests
             var activation = "";
 
             var atom = Atom.Value(
+                Lifetime,
                 1,
                 callbacks: new ActionAtomCallbacks(
                     onActive: () => activation += "A",
@@ -169,7 +253,7 @@ namespace UniMob.Tests
 
             Assert.AreEqual("", activation);
 
-            var autoRun = Atom.Reaction(() => atom.Get());
+            var autoRun = Atom.Reaction(Lifetime, () => atom.Get());
             Assert.AreEqual("A", activation);
 
             atom.Value = 2;
@@ -185,7 +269,7 @@ namespace UniMob.Tests
         public void Caching()
         {
             var random = new Random();
-            var atom = Atom.Computed(() => random.Next(), keepAlive: true);
+            var atom = Atom.Computed(Lifetime, () => random.Next() /*, keepAlive: true*/);
 
             Assert.AreEqual(atom.Value, atom.Value);
         }
@@ -194,7 +278,7 @@ namespace UniMob.Tests
         public void Lazy()
         {
             var value = 0;
-            var atom = Atom.Computed(() => value = 1);
+            var atom = Atom.Computed(Lifetime, () => value = 1);
 
             AtomScheduler.Sync();
             Assert.AreEqual(0, value);
@@ -206,9 +290,9 @@ namespace UniMob.Tests
         [Test]
         public void InstantActualization()
         {
-            var source = Atom.Value(1);
-            var middle = Atom.Computed(() => source.Value + 1);
-            var target = Atom.Computed(() => middle.Value + 1);
+            var source = Atom.Value(Lifetime, 1);
+            var middle = Atom.Computed(Lifetime, () => source.Value + 1);
+            var target = Atom.Computed(Lifetime, () => middle.Value + 1);
 
             Assert.AreEqual(3, target.Value);
 
@@ -222,13 +306,13 @@ namespace UniMob.Tests
         {
             var targetUpdates = 0;
 
-            var source = Atom.Value(1);
-            var middle = Atom.Computed(() => Math.Abs(source.Value));
-            var target = Atom.Computed(() =>
+            var source = Atom.Value(Lifetime, 1);
+            var middle = Atom.Computed(Lifetime, () => Math.Abs(source.Value));
+            var target = Atom.Computed(Lifetime, () =>
             {
                 ++targetUpdates;
                 return middle.Value;
-            }, keepAlive: true);
+            } /*, keepAlive: true*/);
 
             target.Get();
             Assert.AreEqual(1, target.Value);
@@ -244,20 +328,20 @@ namespace UniMob.Tests
         {
             var actualization = "";
 
-            var source = Atom.Value(1);
-            var middle = Atom.Computed(() =>
+            var source = Atom.Value(Lifetime, 1);
+            var middle = Atom.Computed(Lifetime, () =>
             {
                 actualization += "M";
                 return source.Value;
             });
-            var target = Atom.Computed(() =>
+            var target = Atom.Computed(Lifetime, () =>
             {
                 actualization += "T";
                 source.Get();
                 return middle.Value;
             });
 
-            var autoRun = Atom.Reaction(() => target.Get());
+            var autoRun = Atom.Reaction(Lifetime, () => target.Get());
             Assert.AreEqual("TM", actualization);
 
             source.Value = 2;
@@ -268,16 +352,16 @@ namespace UniMob.Tests
             autoRun.Deactivate();
         }
 
+
         [Test]
-        public void AtomicDeferredRestart()
+        public void ReactionAutoActualizes()
         {
             int targetValue = 0;
 
-            var source = Atom.Value(1);
-            var middle = Atom.Computed(() => source.Value + 1);
-            var target = Atom.Computed(() => targetValue = middle.Value + 1, keepAlive: true);
+            var source = Atom.Value(Lifetime, 1);
+            var middle = Atom.Computed(Lifetime, () => source.Value + 1);
+            Atom.Reaction(Lifetime, () => targetValue = middle.Value + 1);
 
-            target.Get();
             Assert.AreEqual(3, targetValue);
 
             source.Value = 2;
@@ -288,9 +372,32 @@ namespace UniMob.Tests
         }
 
         [Test]
+        public void ComputedNotActualizesWithoutDirectAccess()
+        {
+            int targetValue = 0;
+
+            var source = Atom.Value(Lifetime, 1);
+            var middle = Atom.Computed(Lifetime, () => source.Value + 1);
+            var target = Atom.Computed(Lifetime, () => targetValue = middle.Value + 1);
+
+            target.Get();
+            Assert.AreEqual(3, targetValue);
+
+            source.Value = 2;
+            Assert.AreEqual(3, targetValue);
+
+            AtomScheduler.Sync();
+            Assert.AreEqual(3, targetValue);
+
+            target.Get();
+            Assert.AreEqual(4, targetValue);
+        }
+
+        [Test]
         public void SettingEqualStateAreIgnored()
         {
             var atom = Atom.Value(
+                Lifetime,
                 new[] {1, 2, 3},
                 comparer: new TestComparer<int[]>((a, b) => a.SequenceEqual(b)));
 
@@ -306,10 +413,10 @@ namespace UniMob.Tests
         [Test]
         public void ThrowException()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value(Lifetime, 0);
             var exception = new Exception();
 
-            var middle = Atom.Computed(() =>
+            var middle = Atom.Computed(Lifetime, () =>
             {
                 if (source.Value == 0)
                     throw exception;
@@ -320,6 +427,7 @@ namespace UniMob.Tests
             var stack = new Stack<Exception>();
 
             var reaction = new ReactionAtom(
+                Lifetime,
                 debugName: null,
                 reaction: () => middle.Get(),
                 exceptionHandler: ex => stack.Push(ex));
@@ -340,11 +448,11 @@ namespace UniMob.Tests
         public void Invalidate()
         {
             //
-            var source = Atom.Value(0);
+            var source = Atom.Value(Lifetime, 0);
 
             string actualization = "";
 
-            var dispose = Atom.Reaction(() =>
+            var dispose = Atom.Reaction(Lifetime, () =>
             {
                 source.Get();
                 actualization += "T";
@@ -364,10 +472,10 @@ namespace UniMob.Tests
         [Test]
         public void AutoRun()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value(Lifetime, 0);
 
             int runs = 0;
-            var disposer = Atom.Reaction(() =>
+            var disposer = Atom.Reaction(Lifetime, () =>
             {
                 source.Get();
                 ++runs;
@@ -388,11 +496,11 @@ namespace UniMob.Tests
         [Test]
         public void WhenAtom()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value(Lifetime, 0);
 
             string watch = "";
 
-            Atom.When(() => source.Value > 1, () => watch += "B");
+            Atom.When(Lifetime, () => source.Value > 1, () => watch += "B");
 
             AtomScheduler.Sync();
             Assert.AreEqual("", watch);
@@ -413,14 +521,15 @@ namespace UniMob.Tests
         [Test]
         public void Reaction()
         {
-            var source = Atom.Value(0);
-            var middle = Atom.Computed(
+            var source = Atom.Value(Lifetime, 0);
+            var middle = Atom.Computed(Lifetime,
                 () => source.Value < 0 ? throw new Exception() : source.Value);
 
             var result = 0;
             var errors = 0;
 
             Atom.Reaction(
+                Lifetime,
                 reaction: () => middle.Value,
                 effect: (value, disposable) =>
                 {
@@ -451,10 +560,10 @@ namespace UniMob.Tests
         [Test]
         public void ReactionUpdatesOnce()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value(Lifetime, 0);
 
             var watch = "";
-            var reaction = Atom.Reaction(() => source.Value, v => watch += "B");
+            var reaction = Atom.Reaction(Lifetime, () => source.Value, v => watch += "B");
 
             Assert.AreEqual("B", watch);
 
@@ -467,12 +576,12 @@ namespace UniMob.Tests
         [Test]
         public void UnwatchedPullOfObsoleteActiveAtom()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value(Lifetime, 0);
 
-            var computed = Atom.Computed(() => source.Value + 1);
+            var computed = Atom.Computed(Lifetime, () => source.Value + 1);
             var computedBase = (AtomBase) computed;
 
-            var reaction = Atom.Reaction(() => computed.Get());
+            var reaction = Atom.Reaction(Lifetime, () => computed.Get());
 
             Assert.IsTrue(computedBase.IsActive);
             Assert.AreEqual(1, computedBase.Children?.Count ?? 0);
@@ -496,8 +605,8 @@ namespace UniMob.Tests
         {
             Atom<int> a, b = null;
 
-            a = Atom.Computed(() => b.Value);
-            b = Atom.Computed(() => a.Value);
+            a = Atom.Computed(Lifetime, () => b.Value);
+            b = Atom.Computed(Lifetime, () => a.Value);
 
             Assert.AreEqual(a.SubscribersCount(), 0);
             Assert.AreEqual(b.SubscribersCount(), 0);
@@ -510,12 +619,12 @@ namespace UniMob.Tests
         {
             Atom<int> a, b = null;
 
-            a = Atom.Computed(() => b.Value);
-            b = Atom.Computed(() => a.Value);
+            a = Atom.Computed(Lifetime, () => b.Value);
+            b = Atom.Computed(Lifetime, () => a.Value);
 
             Exception exception = null;
 
-            var reaction = Atom.Reaction(() =>
+            var reaction = Atom.Reaction(Lifetime, () =>
             {
                 a.Get();
                 b.Get();
@@ -533,10 +642,10 @@ namespace UniMob.Tests
         [Test]
         public void SelfUpdateActualizeNextFrame()
         {
-            var source = Atom.Value(0);
+            var source = Atom.Value(Lifetime, 0);
 
             int runs = 0;
-            var reaction = Atom.Reaction(() =>
+            var reaction = Atom.Reaction(Lifetime, () =>
             {
                 runs++;
 
@@ -570,6 +679,7 @@ namespace UniMob.Tests
             var source = 0;
 
             var medium = Atom.Computed(
+                Lifetime,
                 () => source,
                 val => source = val
             );

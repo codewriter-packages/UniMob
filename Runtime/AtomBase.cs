@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
 namespace UniMob
@@ -7,30 +8,22 @@ namespace UniMob
     public abstract class AtomBase : IEquatable<AtomBase>
     {
         private readonly string _debugName;
-        private readonly bool _keepAlive;
         private readonly IAtomCallbacks _callbacks;
         private List<AtomBase> _children;
         private List<AtomBase> _subscribers;
-        private bool _active;
-        private bool _reaping;
+        private AtomOptions _options;
 
-        public AtomState State = AtomState.Obsolete;
+        internal AtomState State = AtomState.Obsolete;
 
         [CanBeNull] public IReadOnlyList<AtomBase> Children => _children;
         [CanBeNull] public IReadOnlyList<AtomBase> Subscribers => _subscribers;
 
-        public bool KeepAlive => _keepAlive;
-        public bool IsActive => _active;
         public int SubscribersCount => _subscribers?.Count ?? 0;
         public string DebugName => _debugName;
 
-        internal bool Reaping
-        {
-            get => _reaping;
-            set => _reaping = value;
-        }
+        public bool IsActive => _options.Has(AtomOptions.Active);
 
-        public enum AtomState
+        internal enum AtomState
         {
             Obsolete,
             Checking,
@@ -38,11 +31,21 @@ namespace UniMob
             Actual,
         }
 
-        protected AtomBase(string debugName, bool keepAlive, IAtomCallbacks callbacks)
+        [Flags]
+        internal enum AtomOptions
+        {
+            None = 0,
+            AutoActualize = 1 << 0,
+            Active = 1 << 10,
+        }
+
+        internal AtomBase(Lifetime lifetime, string debugName, AtomOptions options, IAtomCallbacks callbacks)
         {
             _debugName = debugName;
-            _keepAlive = keepAlive;
+            _options = options;
             _callbacks = callbacks;
+
+            lifetime.Register(this);
         }
 
         public bool Equals(AtomBase other)
@@ -70,9 +73,9 @@ namespace UniMob
                 }
             }
 
-            if (_active)
+            if (IsActive)
             {
-                _active = false;
+                _options.Reset(AtomOptions.Active);
                 _callbacks?.OnInactive();
                 AtomRegistry.OnInactivate(this);
             }
@@ -94,9 +97,9 @@ namespace UniMob
 
             Stack.Push(this);
 
-            if (!_active)
+            if (!IsActive)
             {
-                _active = true;
+                _options.Set(AtomOptions.Active);
                 _callbacks?.OnActive();
                 AtomRegistry.OnActivate(this);
             }
@@ -166,16 +169,9 @@ namespace UniMob
                     _subscribers[i].Check();
                 }
             }
-            else
+            else if (_options.Has(AtomOptions.AutoActualize))
             {
-                if (KeepAlive)
-                {
-                    AtomScheduler.Actualize(this);
-                }
-                else
-                {
-                    AtomScheduler.Reap(this);
-                }
+                AtomScheduler.Actualize(this);
             }
         }
 
@@ -204,7 +200,6 @@ namespace UniMob
             if (_subscribers == null)
             {
                 CreateList(out _subscribers);
-                AtomScheduler.Unreap(this);
             }
 
             _subscribers.Add(subscriber);
@@ -222,11 +217,6 @@ namespace UniMob
             if (_subscribers.Count == 0)
             {
                 DeleteList(ref _subscribers);
-
-                if (!KeepAlive)
-                {
-                    AtomScheduler.Reap(this);
-                }
             }
         }
 
@@ -274,6 +264,27 @@ namespace UniMob
             list.Clear();
             ListPool.Push(list);
             list = null;
+        }
+    }
+
+    internal static class AtomOptionExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Has(this AtomBase.AtomOptions keys, in AtomBase.AtomOptions flag)
+        {
+            return (keys & flag) != 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Set(this ref AtomBase.AtomOptions keys, in AtomBase.AtomOptions flag)
+        {
+            keys |= flag;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Reset(this ref AtomBase.AtomOptions keys, in AtomBase.AtomOptions flag)
+        {
+            keys &= ~flag;
         }
     }
 }

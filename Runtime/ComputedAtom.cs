@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using JetBrains.Annotations;
-using UnityEngine;
 
 namespace UniMob
 {
@@ -11,7 +10,6 @@ namespace UniMob
         private readonly IEqualityComparer<T> _comparer;
         private readonly AtomPull<T> _pull;
         private readonly AtomPush<T> _push;
-        private readonly bool _requiresReaction;
 
         private bool _hasCache;
         private T _cache;
@@ -19,19 +17,17 @@ namespace UniMob
         private bool _nextDirectEvaluate;
 
         internal ComputedAtom(
+            Lifetime lifetime,
             string debugName,
             [NotNull] AtomPull<T> pull,
-            AtomPush<T> push = null,
-            bool keepAlive = false,
-            bool requiresReaction = false,
+            AtomPush<T> push,
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
-            : base(debugName, keepAlive, callbacks)
+            : base(lifetime, debugName, AtomOptions.None, callbacks)
         {
             _pull = pull ?? throw new ArgumentNullException(nameof(pull));
             _push = push;
             _comparer = comparer ?? EqualityComparer<T>.Default;
-            _requiresReaction = requiresReaction;
         }
 
         // for CodeGen
@@ -65,24 +61,6 @@ namespace UniMob
                 if (State == AtomState.Pulling)
                 {
                     throw new CyclicAtomDependencyException(this);
-                }
-
-                if (!IsActive && Stack.Peek() == null && !KeepAlive)
-                {
-                    WarnAboutUnTrackedRead();
-
-                    var oldState = State;
-                    try
-                    {
-                        State = AtomState.Pulling;
-                        _nextDirectEvaluate = true;
-                        return _pull();
-                    }
-                    finally
-                    {
-                        State = oldState;
-                        _nextDirectEvaluate = false;
-                    }
                 }
 
                 SubscribeToParent();
@@ -180,16 +158,6 @@ namespace UniMob
             _exception = null;
 
             ObsoleteSubscribers();
-        }
-
-        private void WarnAboutUnTrackedRead()
-        {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (_requiresReaction)
-            {
-                Debug.LogError($"[UniMob] Computed value is read outside a reactive context: {this}");
-            }
-#endif
         }
     }
 }
