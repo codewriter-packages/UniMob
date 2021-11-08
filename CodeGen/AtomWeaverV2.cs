@@ -17,13 +17,13 @@ namespace UniMob.Editor.Weaver
         private const string CompAndInvalidateMethodName = nameof(ComputedAtom<int>.CompareAndInvalidate);
         private const string CreateAtomMethodName = nameof(CodeGenAtom.Create);
         private const string KeepAliveParameterName = nameof(AtomAttribute.KeepAlive);
-        private const string RequireReactionParameterName = nameof(AtomAttribute.RequireReaction);
 
         private List<DiagnosticMessage> _diagnosticMessages = new List<DiagnosticMessage>();
 
         private ModuleDefinition _module;
 
         private TypeReference _atomType;
+        private TypeReference _atomScopeInterfaceType;
 
         private MethodReference _atomCreateMethod;
         private MethodReference _atomGetValueMethod;
@@ -32,7 +32,7 @@ namespace UniMob.Editor.Weaver
 
         private MethodReference _atomPullCtorMethod;
 
-        private bool generateDebugNames;
+        private bool _generateDebugNames;
 
         public List<DiagnosticMessage> Weave(AssemblyDefinition assembly, out bool didAnyChange)
         {
@@ -54,11 +54,12 @@ namespace UniMob.Editor.Weaver
 
         private void Prepare(AssemblyDefinition assembly)
         {
-            generateDebugNames = Helpers.GetCustomAttribute<AtomGenerateDebugNamesAttribute>(assembly) != null;
-            
+            _generateDebugNames = Helpers.GetCustomAttribute<AtomGenerateDebugNamesAttribute>(assembly) != null;
+
             _module = assembly.MainModule;
 
             _atomType = _module.ImportReference(typeof(ComputedAtom<>));
+            _atomScopeInterfaceType = _module.ImportReference(typeof(IAtomScope));
 
             var atomTypeDef = _atomType.Resolve();
             var atomPullDef = _module.ImportReference(typeof(AtomPull<>)).Resolve();
@@ -88,6 +89,12 @@ namespace UniMob.Editor.Weaver
                 return false;
             }
 
+            if (!property.DeclaringType.IsInterfaceImplemented(_atomScopeInterfaceType))
+            {
+                _diagnosticMessages.Add(UserError.AtomAttributeCanBeUsedOnlyOnAtomScope(property));
+                return false;
+            }
+
             if (property.GetMethod == null)
             {
                 _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnSetOnlyProperty(property));
@@ -99,7 +106,7 @@ namespace UniMob.Editor.Weaver
                 _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnStaticProperty(property));
                 return false;
             }
-            
+
             if (property.GetMethod.IsAbstract)
             {
                 _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnAbstractProperty(property));
@@ -109,11 +116,10 @@ namespace UniMob.Editor.Weaver
             var atomOptions = new AtomOptions
             {
                 KeepAlive = atomAttribute.GetArgumentValueOrDefault(KeepAliveParameterName, false),
-                RequireReaction = atomAttribute.GetArgumentValueOrDefault(RequireReactionParameterName, false),
             };
-
-            property.CustomAttributes.Remove(atomAttribute);
             
+            property.CustomAttributes.Remove(atomAttribute);
+
             FixAutoPropertyBackingField(property);
 
             var atomField = CreateAtomField(property);
@@ -150,11 +156,10 @@ namespace UniMob.Editor.Weaver
             var atomFieldType = Helpers.MakeGenericType(_atomType, property.PropertyType);
             return new FieldDefinition(name, FieldAttributes.Private, atomFieldType);
         }
-
+        
         private struct AtomOptions
         {
             public bool KeepAlive;
-            public bool RequireReaction;
         }
 
         private struct AtomGetterMethodWeaver
@@ -182,7 +187,7 @@ namespace UniMob.Editor.Weaver
                 _options = options;
                 _property = property;
 
-                _atomDebugName = weaver.generateDebugNames
+                _atomDebugName = weaver._generateDebugNames
                     ? $"{property.DeclaringType.FullName}::{property.Name}"
                     : null;
                 _resultVariable = new VariableDefinition(property.PropertyType);
@@ -239,6 +244,7 @@ namespace UniMob.Editor.Weaver
 
                 // atom = new ComputedAtom<int>("name", get_atom);
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0));
+                il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0)); // atom scope
                 il.Insert(ind++, _atomDebugName != null
                     ? Instruction.Create(OpCodes.Ldstr, _atomDebugName)
                     : Instruction.Create(OpCodes.Ldnull)); // debugName
@@ -246,7 +252,6 @@ namespace UniMob.Editor.Weaver
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldftn, _property.GetMethod));
                 il.Insert(ind++, Instruction.Create(OpCodes.Newobj, _atomPullCtorMethod));
                 il.Insert(ind++, Instruction.Create(_options.KeepAlive ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0));
-                il.Insert(ind++, Instruction.Create(_options.RequireReaction ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0));
                 il.Insert(ind++, Instruction.Create(OpCodes.Call, _atomCreateMethod)); // create atom
                 il.Insert(ind++, Instruction.Create(OpCodes.Stfld, _atomField));
 

@@ -132,7 +132,7 @@ namespace UniMob.Tests
         public void AtomInvokesOnActiveCallbackOnFirstActivation()
         {
             var activation = "";
-            var atom = Atom.Computed(Lifetime, () => 1, new ActionAtomCallbacks(
+            var atom = Atom.Computed(Lifetime, () => 1, callbacks: new ActionAtomCallbacks(
                 onActive: () => activation += "A",
                 onInactive: () => { }
             ));
@@ -150,7 +150,7 @@ namespace UniMob.Tests
 
             using (var nested = Lifetime.CreateNested())
             {
-                var atom = Atom.Computed(nested.Lifetime, () => 1, new ActionAtomCallbacks(
+                var atom = Atom.Computed(nested.Lifetime, () => 1, callbacks: new ActionAtomCallbacks(
                     onActive: () => { },
                     onInactive: () => deactivation += "D"
                 ));

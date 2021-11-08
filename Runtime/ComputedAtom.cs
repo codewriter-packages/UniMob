@@ -21,9 +21,10 @@ namespace UniMob
             string debugName,
             [NotNull] AtomPull<T> pull,
             AtomPush<T> push,
+            bool keepAlive = false,
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
-            : base(lifetime, debugName, AtomOptions.None, callbacks)
+            : base(lifetime, debugName, keepAlive ? AtomOptions.AutoActualize : AtomOptions.None, callbacks)
         {
             _pull = pull ?? throw new ArgumentNullException(nameof(pull));
             _push = push;

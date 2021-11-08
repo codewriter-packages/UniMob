@@ -1,12 +1,18 @@
+using System;
+
 namespace UniMob
 {
     public static class CodeGenAtom
     {
-        public static ComputedAtom<T> Create<T>(string debugName, AtomPull<T> pull,
-            bool keepAlive, bool requireReaction)
+        public static ComputedAtom<T> Create<T>(IAtomScope scope, string debugName, AtomPull<T> pull, bool keepAlive)
         {
-            var lifetime = Lifetime.Eternal;
-            return new ComputedAtom<T>(lifetime, debugName, pull, null);
+            if (scope == null)
+            {
+                throw new ArgumentNullException(nameof(scope));
+            }
+
+            var lifetime = scope.Lifetime;
+            return new ComputedAtom<T>(lifetime, debugName, pull, null, keepAlive);
         }
     }
 }

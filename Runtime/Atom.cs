@@ -75,6 +75,7 @@ namespace UniMob
         /// </remarks>
         /// <param name="lifetime">Atom lifetime.</param>
         /// <param name="pull">Function for pulling value.</param>
+        /// <param name="keepAlive">Should an atom keep its value actualized when there are no subscribers?</param>
         /// <param name="callbacks">Atom lifetime callbacks.</param>
         /// <param name="comparer">Value comparer used for reconciling.</param>
         /// <param name="debugName">Debug name for this atom.</param>
@@ -93,11 +94,12 @@ namespace UniMob
         public static Atom<T> Computed<T>(
             Lifetime lifetime,
             AtomPull<T> pull,
+            bool keepAlive = false,
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null,
             string debugName = null)
         {
-            return new ComputedAtom<T>(lifetime, debugName, pull, null, callbacks, comparer);
+            return new ComputedAtom<T>(lifetime, debugName, pull, null, keepAlive, callbacks, comparer);
         }
 
         /// <summary>
@@ -116,6 +118,7 @@ namespace UniMob
         /// <param name="lifetime">Atom lifetime.</param>
         /// <param name="pull">Function for pulling value.</param>
         /// <param name="push">Function for pushing new value.</param>
+        /// <param name="keepAlive">Should an atom keep its value actualized when there are no subscribers?</param>
         /// <param name="callbacks">Atom lifetime callbacks.</param>
         /// <param name="comparer">Value comparer used for reconciling.</param>
         /// <param name="debugName">Debug name for this atom.</param>
@@ -135,11 +138,12 @@ namespace UniMob
             Lifetime lifetime,
             AtomPull<T> pull,
             AtomPush<T> push,
+            bool keepAlive = false,
             IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null,
             string debugName = null)
         {
-            return new ComputedAtom<T>(lifetime, debugName, pull, push, callbacks, comparer);
+            return new ComputedAtom<T>(lifetime, debugName, pull, push, keepAlive, callbacks, comparer);
         }
 
         private class WatchScope : IDisposable

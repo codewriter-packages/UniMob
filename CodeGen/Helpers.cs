@@ -179,5 +179,20 @@ namespace UniMob.Editor.Weaver
 
             return sequencePoints.FirstOrDefault();
         }
+
+        public static bool IsInterfaceImplemented(this TypeDefinition type, TypeReference interfaceType)
+        {
+            while (type != null)
+            {
+                if (type.Interfaces.Any(t => t.InterfaceType.FullName == interfaceType.FullName))
+                {
+                    return true;
+                }
+
+                type = type.BaseType?.Resolve();
+            }
+
+            return false;
+        }
     }
 }
