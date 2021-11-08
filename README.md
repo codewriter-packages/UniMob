@@ -15,10 +15,9 @@ So what does code that uses UniMob look like?
 
 ```csharp
 using UniMob;
-using UnityEngine;
 using UnityEngine.UI;
 
-public class Counter : MonoBehaviour
+public class SampleCounter : LifetimeMonoBehaviour
 {
     public Text counterText;
     public Button incrementButton;
@@ -26,13 +25,13 @@ public class Counter : MonoBehaviour
     // declare reactive property
     [Atom] private int Counter { get; set; }
 
-    private void Start()
+    protected override void Start()
     {
         // increment Counter on button click
         incrementButton.onClick.AddListener(() => Counter += 1);
         
-        // Update counterText when Counter changed
-        Atom.Reaction(() => counterText.text = "Tap count: " + Counter);
+        // Update counterText when Counter changed until Lifetime terminated
+        Atom.Reaction(Lifetime, () => counterText.text = "Tap count: " + Counter);
     }
 }
 ```
@@ -48,8 +47,11 @@ UniMob adds observable capabilities to existing data. This can simply be done by
 ```csharp
 using UniMob;
 
-public class Todo
+public class Todo : ILifetimeScope
 {
+    public Todo(Lifetime lifetime) { Lifetime = lifetime; }
+    public Lifetime Lifetime { get; }
+
     [Atom] public string Title { get; set; } = "";
     [Atom] public bool Finished { get; set; } = false;
 }
@@ -65,8 +67,11 @@ With UniMob you can define values that will be derived automatically when releva
 using UniMob;
 using System.Linq;
 
-public class TodoList
+public class TodoList : ILifetimeScope
 {
+    public TodoList(Lifetime lifetime) { Lifetime = lifetime; }
+    public Lifetime Lifetime { get; }
+
     [Atom] public Todo[] Todos { get; set; } = new Todo[0];
     [Atom] public int UnfinishedTodoCount => Todos.Count(todo => !todo.Finished);
 }
@@ -110,7 +115,7 @@ Custom reactions can simply be created using the `Reaction` or `When` methods to
 For example the following `Reaction` prints a log message each time the amount of `UnfinishedTodoCount` changes:
 
 ```csharp
-Atom.Reaction(() => {
+Atom.Reaction(Lifetime, () => {
     Debug.Log("Tasks left: " + todoList.UnfinishedTodoCount);
 });
 ```
