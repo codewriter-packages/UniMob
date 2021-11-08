@@ -221,4 +221,9 @@ namespace UniMob
             return new Lifetime(controller);
         }
     }
+
+    public interface ILifetimeScope
+    {
+        Lifetime Lifetime { get; }
+    }
 }

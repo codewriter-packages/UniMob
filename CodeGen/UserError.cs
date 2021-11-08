@@ -10,8 +10,8 @@ namespace UniMob.Editor.Weaver
         public static DiagnosticMessage AtomAttributeCanBeUsedOnlyOnClassMembers(PropertyDefinition property)
             => Make(DType.Error, Code(11), $"Atom attribute can be used only on class members", property);
         
-        public static DiagnosticMessage AtomAttributeCanBeUsedOnlyOnAtomScope(PropertyDefinition property)
-            => Make(DType.Error, Code(11), $"Atom attribute can be used only on class that implements IAtomScope interface", property);
+        public static DiagnosticMessage AtomAttributeCanBeUsedOnlyOnLifetimeScope(PropertyDefinition property)
+            => Make(DType.Error, Code(11), $"Atom attribute can be used only on class that implements ILifetimeScope interface", property);
 
         public static DiagnosticMessage CannotUseAtomAttributeOnSetOnlyProperty(PropertyDefinition property)
             => Make(DType.Error, Code(21), $"Atom attribute cannot be used on set-only property", property);

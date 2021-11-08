@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace UniMob
 {
-    public abstract class LifetimeMonoBehaviour : MonoBehaviour, IAtomScope
+    public abstract class LifetimeMonoBehaviour : MonoBehaviour, ILifetimeScope
     {
         private readonly LifetimeController _lifetimeController = new LifetimeController();
 

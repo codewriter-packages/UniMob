@@ -23,7 +23,7 @@ namespace UniMob.Editor.Weaver
         private ModuleDefinition _module;
 
         private TypeReference _atomType;
-        private TypeReference _atomScopeInterfaceType;
+        private TypeReference _lifetimeScopeInterfaceType;
 
         private MethodReference _atomCreateMethod;
         private MethodReference _atomGetValueMethod;
@@ -59,7 +59,7 @@ namespace UniMob.Editor.Weaver
             _module = assembly.MainModule;
 
             _atomType = _module.ImportReference(typeof(ComputedAtom<>));
-            _atomScopeInterfaceType = _module.ImportReference(typeof(IAtomScope));
+            _lifetimeScopeInterfaceType = _module.ImportReference(typeof(ILifetimeScope));
 
             var atomTypeDef = _atomType.Resolve();
             var atomPullDef = _module.ImportReference(typeof(AtomPull<>)).Resolve();
@@ -89,9 +89,9 @@ namespace UniMob.Editor.Weaver
                 return false;
             }
 
-            if (!property.DeclaringType.IsInterfaceImplemented(_atomScopeInterfaceType))
+            if (!property.DeclaringType.IsInterfaceImplemented(_lifetimeScopeInterfaceType))
             {
-                _diagnosticMessages.Add(UserError.AtomAttributeCanBeUsedOnlyOnAtomScope(property));
+                _diagnosticMessages.Add(UserError.AtomAttributeCanBeUsedOnlyOnLifetimeScope(property));
                 return false;
             }
 
