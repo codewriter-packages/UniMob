@@ -25,18 +25,14 @@ namespace UniMob
             }
             set
             {
-                using (Atom.NoWatch)
+                if (_comparer.Equals(value, _value))
                 {
-                    if (_comparer.Equals(value, _value))
-                    {
-                        return;
-                    }
-
-                    State = AtomState.Actual;
-                    _value = value;
-
-                    ObsoleteSubscribers();
+                    return;
                 }
+
+                Invalidate();
+
+                _value = value;
             }
         }
 
@@ -47,6 +43,8 @@ namespace UniMob
 
         public void Invalidate()
         {
+            State = AtomState.Obsolete;
+
             ObsoleteSubscribers();
         }
     }

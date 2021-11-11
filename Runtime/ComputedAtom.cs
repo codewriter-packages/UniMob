@@ -73,18 +73,14 @@ namespace UniMob
                     throw new InvalidOperationException("It is not possible to assign a new value to a readonly Atom");
                 }
 
-                using (Atom.NoWatch)
+                if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
                 {
-                    if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
-                    {
-                        return;
-                    }
-
-                    Invalidate();
-
-
-                    _push(value);
+                    return;
                 }
+
+                Invalidate();
+
+                _push(value);
             }
         }
 
@@ -108,12 +104,9 @@ namespace UniMob
 
                 var value = _pull();
 
-                using (Atom.NoWatch)
+                if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
                 {
-                    if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
-                    {
-                        return;
-                    }
+                    return;
                 }
 
                 changed = options.Has(AtomOptions.HasCache) || _exception != null;

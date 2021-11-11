@@ -79,6 +79,42 @@ namespace UniMob.Tests
         }
 
         [Test]
+        [TestCase("Value")]
+        [TestCase("Computed")]
+        public void AtomActivatedOnRead(string type)
+        {
+            var atom = type == "Value" ? Atom.Value(Lifetime, 1) : Atom.Computed(Lifetime, () => 1);
+            atom.Get();
+            Assert.IsTrue(atom.IsActive());
+        }
+
+        [Test]
+        [TestCase("Value")]
+        [TestCase("Computed")]
+        public void AtomActivatedOnReadAfterUpdate(string type)
+        {
+            var atom = type == "Value" ? Atom.Value(Lifetime, 1) : Atom.Computed(Lifetime, () => 1, _ => { });
+
+            atom.Value = 2;
+            atom.Get();
+
+            Assert.IsTrue(atom.IsActive());
+        }
+
+        [Test]
+        [TestCase("Value")]
+        [TestCase("Computed")]
+        public void ValueAtomActivatedOnReadAfterInvalidate(string type)
+        {
+            var atom = type == "Value" ? Atom.Value(Lifetime, 1) : Atom.Computed(Lifetime, () => 1);
+
+            atom.Invalidate();
+            atom.Get();
+
+            Assert.IsTrue(atom.IsActive());
+        }
+
+        [Test]
         public void Caching()
         {
             var random = new Random();
