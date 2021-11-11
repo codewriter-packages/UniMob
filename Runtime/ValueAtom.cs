@@ -11,9 +11,8 @@ namespace UniMob
             Lifetime lifetime,
             string debugName,
             T value,
-            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null)
-            : base(lifetime, debugName, AtomOptions.None, callbacks)
+            : base(lifetime, debugName, AtomOptions.None)
         {
             _value = value;
             _comparer = comparer ?? EqualityComparer<T>.Default;

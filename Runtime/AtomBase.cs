@@ -8,7 +8,6 @@ namespace UniMob
     public abstract class AtomBase : IEquatable<AtomBase>
     {
         private readonly string _debugName;
-        private readonly IAtomCallbacks _callbacks;
         private List<AtomBase> _children;
         private List<AtomBase> _subscribers;
         private AtomOptions _options;
@@ -39,11 +38,10 @@ namespace UniMob
             Active = 1 << 10,
         }
 
-        internal AtomBase(Lifetime lifetime, string debugName, AtomOptions options, IAtomCallbacks callbacks)
+        internal AtomBase(Lifetime lifetime, string debugName, AtomOptions options)
         {
             _debugName = debugName;
             _options = options;
-            _callbacks = callbacks;
 
             lifetime.Register(this);
         }
@@ -76,7 +74,6 @@ namespace UniMob
             if (IsActive)
             {
                 _options.Reset(AtomOptions.Active);
-                _callbacks?.OnInactive();
                 AtomRegistry.OnInactivate(this);
             }
 
@@ -100,7 +97,6 @@ namespace UniMob
             if (!IsActive)
             {
                 _options.Set(AtomOptions.Active);
-                _callbacks?.OnActive();
                 AtomRegistry.OnActivate(this);
             }
 

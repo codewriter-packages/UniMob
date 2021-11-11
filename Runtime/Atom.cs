@@ -28,7 +28,6 @@ namespace UniMob
         /// </summary>
         /// <param name="lifetime">Atom lifetime.</param>
         /// <param name="value">Initial value.</param>
-        /// <param name="callbacks">Atom lifetime callbacks.</param>
         /// <param name="comparer">Value comparer used for reconciling.</param>
         /// <param name="debugName">Debug name for this atom.</param>
         /// <typeparam name="T">Atom value type.</typeparam>
@@ -44,20 +43,18 @@ namespace UniMob
         public static MutableAtom<T> Value<T>(
             Lifetime lifetime,
             T value,
-            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null,
             string debugName = null)
         {
-            return new ValueAtom<T>(lifetime, debugName, value, callbacks, comparer);
+            return new ValueAtom<T>(lifetime, debugName, value, comparer);
         }
         
         public static MutableAtom<T> Value<T>(
             T value,
-            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null,
             string debugName = null)
         {
-            return new ValueAtom<T>(Lifetime.Eternal, debugName, value, callbacks, comparer);
+            return new ValueAtom<T>(Lifetime.Eternal, debugName, value, comparer);
         }
 
         /// <summary>
@@ -76,7 +73,6 @@ namespace UniMob
         /// <param name="lifetime">Atom lifetime.</param>
         /// <param name="pull">Function for pulling value.</param>
         /// <param name="keepAlive">Should an atom keep its value actualized when there are no subscribers?</param>
-        /// <param name="callbacks">Atom lifetime callbacks.</param>
         /// <param name="comparer">Value comparer used for reconciling.</param>
         /// <param name="debugName">Debug name for this atom.</param>
         /// <typeparam name="T">Atom value type.</typeparam>
@@ -95,11 +91,10 @@ namespace UniMob
             Lifetime lifetime,
             AtomPull<T> pull,
             bool keepAlive = false,
-            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null,
             string debugName = null)
         {
-            return new ComputedAtom<T>(lifetime, debugName, pull, null, keepAlive, callbacks, comparer);
+            return new ComputedAtom<T>(lifetime, debugName, pull, null, keepAlive, comparer);
         }
 
         /// <summary>
@@ -119,7 +114,6 @@ namespace UniMob
         /// <param name="pull">Function for pulling value.</param>
         /// <param name="push">Function for pushing new value.</param>
         /// <param name="keepAlive">Should an atom keep its value actualized when there are no subscribers?</param>
-        /// <param name="callbacks">Atom lifetime callbacks.</param>
         /// <param name="comparer">Value comparer used for reconciling.</param>
         /// <param name="debugName">Debug name for this atom.</param>
         /// <typeparam name="T">Atom value type.</typeparam>
@@ -139,11 +133,10 @@ namespace UniMob
             AtomPull<T> pull,
             AtomPush<T> push,
             bool keepAlive = false,
-            IAtomCallbacks callbacks = null,
             IEqualityComparer<T> comparer = null,
             string debugName = null)
         {
-            return new ComputedAtom<T>(lifetime, debugName, pull, push, keepAlive, callbacks, comparer);
+            return new ComputedAtom<T>(lifetime, debugName, pull, push, keepAlive, comparer);
         }
 
         private class WatchScope : IDisposable

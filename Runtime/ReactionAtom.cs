@@ -14,7 +14,7 @@ namespace UniMob
             string debugName,
             Action reaction,
             Action<Exception> exceptionHandler = null)
-            : base(lifetime, debugName, AtomOptions.AutoActualize, null)
+            : base(lifetime, debugName, AtomOptions.AutoActualize)
         {
             _reaction = reaction ?? throw new ArgumentNullException(nameof(reaction));
             _exceptionHandler = exceptionHandler ?? Debug.LogException;
