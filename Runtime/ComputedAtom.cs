@@ -21,13 +21,12 @@ namespace UniMob
             string debugName,
             [NotNull] AtomPull<T> pull,
             AtomPush<T> push,
-            bool keepAlive = false,
-            IEqualityComparer<T> comparer = null)
+            bool keepAlive = false)
             : base(lifetime, debugName, keepAlive ? AtomOptions.AutoActualize : AtomOptions.None)
         {
             _pull = pull ?? throw new ArgumentNullException(nameof(pull));
             _push = push;
-            _comparer = comparer ?? EqualityComparer<T>.Default;
+            _comparer = EqualityComparer<T>.Default;
         }
 
         // for CodeGen

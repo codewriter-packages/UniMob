@@ -77,7 +77,7 @@ namespace UniMob.Tests
 
             Assert.IsTrue(target.IsActive());
         }
-        
+
         [Test]
         public void Caching()
         {
@@ -209,18 +209,22 @@ namespace UniMob.Tests
         [Test]
         public void SettingEqualStateAreIgnored()
         {
-            var atom = Atom.Value(
-                Lifetime,
-                new[] {1, 2, 3},
-                comparer: new TestComparer<int[]>((a, b) => a.SequenceEqual(b)));
+            var runs = 0;
 
-            var v1 = atom.Value;
-            var v2 = new[] {1, 2, 3};
-            atom.Value = v2;
-            var v3 = atom.Value;
+            var source = Atom.Value(Lifetime, 1);
+            Atom.Reaction(Lifetime, () =>
+            {
+                runs++;
+                source.Get();
+            });
 
-            Assert.IsTrue(ReferenceEquals(v1, v3));
-            Assert.IsFalse(ReferenceEquals(v2, v3));
+            AtomScheduler.Sync();
+            Assert.AreEqual(1, runs);
+
+            source.Value = 1;
+
+            AtomScheduler.Sync();
+            Assert.AreEqual(1, runs);
         }
 
         [Test]
@@ -504,16 +508,6 @@ namespace UniMob.Tests
 
             Assert.AreEqual(1, source);
             Assert.AreEqual(1, medium.Value);
-        }
-
-        class TestComparer<T> : IEqualityComparer<T>
-        {
-            private readonly Func<T, T, bool> _comparison;
-
-            public TestComparer(Func<T, T, bool> comparison) => _comparison = comparison;
-
-            public bool Equals(T x, T y) => _comparison(x, y);
-            public int GetHashCode(T obj) => obj.GetHashCode();
         }
     }
 }

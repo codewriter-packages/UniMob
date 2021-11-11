@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace UniMob
@@ -28,7 +27,6 @@ namespace UniMob
         /// </summary>
         /// <param name="lifetime">Atom lifetime.</param>
         /// <param name="value">Initial value.</param>
-        /// <param name="comparer">Value comparer used for reconciling.</param>
         /// <param name="debugName">Debug name for this atom.</param>
         /// <typeparam name="T">Atom value type.</typeparam>
         /// <returns>Created atom.</returns>
@@ -40,21 +38,14 @@ namespace UniMob
         /// Debug.Log(counter.Value);
         /// 
         /// </example>
-        public static MutableAtom<T> Value<T>(
-            Lifetime lifetime,
-            T value,
-            IEqualityComparer<T> comparer = null,
-            string debugName = null)
+        public static MutableAtom<T> Value<T>(Lifetime lifetime, T value, string debugName = null)
         {
-            return new ValueAtom<T>(lifetime, debugName, value, comparer);
+            return new ValueAtom<T>(lifetime, debugName, value);
         }
-        
-        public static MutableAtom<T> Value<T>(
-            T value,
-            IEqualityComparer<T> comparer = null,
-            string debugName = null)
+
+        public static MutableAtom<T> Value<T>(T value, string debugName = null)
         {
-            return new ValueAtom<T>(Lifetime.Eternal, debugName, value, comparer);
+            return new ValueAtom<T>(Lifetime.Eternal, debugName, value);
         }
 
         /// <summary>
@@ -73,7 +64,6 @@ namespace UniMob
         /// <param name="lifetime">Atom lifetime.</param>
         /// <param name="pull">Function for pulling value.</param>
         /// <param name="keepAlive">Should an atom keep its value actualized when there are no subscribers?</param>
-        /// <param name="comparer">Value comparer used for reconciling.</param>
         /// <param name="debugName">Debug name for this atom.</param>
         /// <typeparam name="T">Atom value type.</typeparam>
         /// <returns>Created atom.</returns>
@@ -87,14 +77,10 @@ namespace UniMob
         /// Debug.Log(sum.Value);
         /// 
         /// </example>
-        public static Atom<T> Computed<T>(
-            Lifetime lifetime,
-            AtomPull<T> pull,
-            bool keepAlive = false,
-            IEqualityComparer<T> comparer = null,
-            string debugName = null)
+        public static Atom<T> Computed<T>(Lifetime lifetime, AtomPull<T> pull,
+            bool keepAlive = false, string debugName = null)
         {
-            return new ComputedAtom<T>(lifetime, debugName, pull, null, keepAlive, comparer);
+            return new ComputedAtom<T>(lifetime, debugName, pull, null, keepAlive);
         }
 
         /// <summary>
@@ -114,7 +100,6 @@ namespace UniMob
         /// <param name="pull">Function for pulling value.</param>
         /// <param name="push">Function for pushing new value.</param>
         /// <param name="keepAlive">Should an atom keep its value actualized when there are no subscribers?</param>
-        /// <param name="comparer">Value comparer used for reconciling.</param>
         /// <param name="debugName">Debug name for this atom.</param>
         /// <typeparam name="T">Atom value type.</typeparam>
         /// <returns>Created atom.</returns>
@@ -128,15 +113,10 @@ namespace UniMob
         /// Debug.Log(sum.Value);
         /// 
         /// </example>
-        public static MutableAtom<T> Computed<T>(
-            Lifetime lifetime,
-            AtomPull<T> pull,
-            AtomPush<T> push,
-            bool keepAlive = false,
-            IEqualityComparer<T> comparer = null,
-            string debugName = null)
+        public static MutableAtom<T> Computed<T>(Lifetime lifetime, AtomPull<T> pull, AtomPush<T> push,
+            bool keepAlive = false, string debugName = null)
         {
-            return new ComputedAtom<T>(lifetime, debugName, pull, push, keepAlive, comparer);
+            return new ComputedAtom<T>(lifetime, debugName, pull, push, keepAlive);
         }
 
         private class WatchScope : IDisposable

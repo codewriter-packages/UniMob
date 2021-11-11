@@ -7,15 +7,11 @@ namespace UniMob
         private readonly IEqualityComparer<T> _comparer;
         private T _value;
 
-        internal ValueAtom(
-            Lifetime lifetime,
-            string debugName,
-            T value,
-            IEqualityComparer<T> comparer = null)
+        internal ValueAtom(Lifetime lifetime, string debugName, T value)
             : base(lifetime, debugName, AtomOptions.None)
         {
             _value = value;
-            _comparer = comparer ?? EqualityComparer<T>.Default;
+            _comparer = EqualityComparer<T>.Default;
         }
 
         public T Value

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 namespace UniMob
 {
@@ -50,7 +49,6 @@ namespace UniMob
         /// <param name="reaction">A data function.</param>
         /// <param name="effect">A side effect function.</param>
         /// <param name="exceptionHandler">A function that called when an exception is thrown while computing an reaction.</param>
-        /// <param name="comparer">Data comparer used for reconciling.</param>
         /// <param name="fireImmediately">Should the side effect runs once when you create a reaction itself? Default value is true.</param>
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <typeparam name="T">Reaction data type.</typeparam>
@@ -77,11 +75,10 @@ namespace UniMob
             AtomPull<T> reaction,
             Action<T, Reaction> effect,
             Action<Exception> exceptionHandler = null,
-            IEqualityComparer<T> comparer = null,
             bool fireImmediately = true,
             string debugName = null)
         {
-            var valueAtom = Computed(lifetime, reaction, comparer: comparer);
+            var valueAtom = Computed(lifetime, reaction);
             var firstRun = true;
 
             Reaction atom = null;
@@ -124,7 +121,6 @@ namespace UniMob
         /// <param name="reaction">A data function.</param>
         /// <param name="effect">A side effect function.</param>
         /// <param name="exceptionHandler">A function that called when an exception is thrown while computing an reaction.</param>
-        /// <param name="comparer">Data comparer used for reconciling.</param>
         /// <param name="fireImmediately">Should the side effect runs once when you create a reaction itself? Default value is true.</param>
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <typeparam name="T">Reaction data type.</typeparam>
@@ -144,7 +140,6 @@ namespace UniMob
             AtomPull<T> reaction,
             Action<T> effect,
             Action<Exception> exceptionHandler = null,
-            IEqualityComparer<T> comparer = null,
             bool fireImmediately = true,
             string debugName = null)
         {
@@ -153,7 +148,6 @@ namespace UniMob
                 reaction,
                 (value, _) => effect(value),
                 exceptionHandler,
-                comparer,
                 fireImmediately,
                 debugName
             );
