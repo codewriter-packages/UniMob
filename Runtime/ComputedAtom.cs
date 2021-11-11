@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using JetBrains.Annotations;
 
@@ -11,10 +12,8 @@ namespace UniMob
         private readonly AtomPull<T> _pull;
         private readonly AtomPush<T> _push;
 
-        private bool _hasCache;
         private T _cache;
         private ExceptionDispatchInfo _exception;
-        private bool _nextDirectEvaluate;
 
         internal ComputedAtom(
             Lifetime lifetime,
@@ -30,21 +29,16 @@ namespace UniMob
         }
 
         // for CodeGen
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool DirectEvaluate()
         {
-            if (_nextDirectEvaluate)
-            {
-                _nextDirectEvaluate = false;
-                return true;
-            }
-
-            return false;
+            return options.TryReset(AtomOptions.NextDirectEvaluate);
         }
 
         // for CodeGen
         public bool CompareAndInvalidate(T value)
         {
-            if (_hasCache && _comparer.Equals(value, _cache))
+            if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
             {
                 return false;
             }
@@ -81,7 +75,7 @@ namespace UniMob
 
                 using (Atom.NoWatch)
                 {
-                    if (_hasCache && _comparer.Equals(value, _cache))
+                    if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
                     {
                         return;
                     }
@@ -98,7 +92,7 @@ namespace UniMob
         {
             base.Deactivate();
 
-            _hasCache = false;
+            options.Reset(AtomOptions.HasCache);
             _cache = default;
             _exception = null;
         }
@@ -110,21 +104,21 @@ namespace UniMob
             try
             {
                 State = AtomState.Pulling;
-                _nextDirectEvaluate = true;
+                options.Set(AtomOptions.NextDirectEvaluate);
 
                 var value = _pull();
 
                 using (Atom.NoWatch)
                 {
-                    if (_hasCache && _comparer.Equals(value, _cache))
+                    if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
                     {
                         return;
                     }
                 }
 
-                changed = _hasCache || _exception != null;
+                changed = options.Has(AtomOptions.HasCache) || _exception != null;
 
-                _hasCache = true;
+                options.Set(AtomOptions.HasCache);
                 _cache = value;
                 _exception = null;
             }
@@ -132,14 +126,14 @@ namespace UniMob
             {
                 changed = true;
 
-                _hasCache = false;
+                options.Reset(AtomOptions.HasCache);
                 _cache = default;
                 _exception = ExceptionDispatchInfo.Capture(exception);
             }
             finally
             {
                 State = AtomState.Actual;
-                _nextDirectEvaluate = false;
+                options.Reset(AtomOptions.NextDirectEvaluate);
             }
 
             if (changed)
@@ -152,7 +146,7 @@ namespace UniMob
         {
             State = AtomState.Obsolete;
 
-            _hasCache = false;
+            options.Reset(AtomOptions.HasCache);
             _cache = default;
             _exception = null;
 

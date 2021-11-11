@@ -10,7 +10,7 @@ namespace UniMob
         private readonly string _debugName;
         private List<AtomBase> _children;
         private List<AtomBase> _subscribers;
-        private AtomOptions _options;
+        public AtomOptions options;
 
         internal AtomState State = AtomState.Obsolete;
 
@@ -20,7 +20,7 @@ namespace UniMob
         public int SubscribersCount => _subscribers?.Count ?? 0;
         public string DebugName => _debugName;
 
-        public bool IsActive => _options.Has(AtomOptions.Active);
+        public bool IsActive => options.Has(AtomOptions.Active);
 
         internal enum AtomState
         {
@@ -31,17 +31,20 @@ namespace UniMob
         }
 
         [Flags]
-        internal enum AtomOptions
+        public enum AtomOptions
         {
             None = 0,
             AutoActualize = 1 << 0,
-            Active = 1 << 10,
+            Active = 1 << 1,
+            
+            HasCache = 1 << 2,
+            NextDirectEvaluate = 1 << 3,
         }
 
         internal AtomBase(Lifetime lifetime, string debugName, AtomOptions options)
         {
             _debugName = debugName;
-            _options = options;
+            this.options = options;
 
             lifetime.Register(this);
         }
@@ -73,7 +76,7 @@ namespace UniMob
 
             if (IsActive)
             {
-                _options.Reset(AtomOptions.Active);
+                options.Reset(AtomOptions.Active);
                 AtomRegistry.OnInactivate(this);
             }
 
@@ -96,7 +99,7 @@ namespace UniMob
 
             if (!IsActive)
             {
-                _options.Set(AtomOptions.Active);
+                options.Set(AtomOptions.Active);
                 AtomRegistry.OnActivate(this);
             }
 
@@ -165,7 +168,7 @@ namespace UniMob
                     _subscribers[i].Check();
                 }
             }
-            else if (_options.Has(AtomOptions.AutoActualize))
+            else if (options.Has(AtomOptions.AutoActualize))
             {
                 AtomScheduler.Actualize(this);
             }
@@ -281,6 +284,12 @@ namespace UniMob
         public static void Reset(this ref AtomBase.AtomOptions keys, in AtomBase.AtomOptions flag)
         {
             keys &= ~flag;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryReset(this ref AtomBase.AtomOptions keys, in AtomBase.AtomOptions flag)
+        {
+            return keys != (keys &= ~flag);
         }
     }
 }
