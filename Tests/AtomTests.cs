@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using UniMob.Core;
 
 namespace UniMob.Tests
 {
@@ -381,13 +382,18 @@ namespace UniMob.Tests
             var result = 0;
             var errors = 0;
 
+            var nested = Lifetime.CreateNested();
+
             Atom.Reaction(
-                Lifetime,
-                reaction: () => middle.Value,
-                effect: (value, disposable) =>
+                nested.Lifetime,
+                data: () => middle.Value,
+                effect: value =>
                 {
                     result = value;
-                    if (value == 2) disposable.Deactivate();
+                    if (value == 2)
+                    {
+                        nested.Dispose();
+                    }
                 },
                 exceptionHandler: ex => ++errors);
 

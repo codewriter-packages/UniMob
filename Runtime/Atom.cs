@@ -1,26 +1,12 @@
 using System;
 using JetBrains.Annotations;
+using UniMob.Core;
 
 namespace UniMob
 {
     public static partial class Atom
     {
         [CanBeNull] public static AtomBase CurrentScope => AtomBase.Stack.Peek();
-
-        /// <summary>
-        /// Creates a scope which blocks changes propagation. <br/>
-        /// <br/>
-        /// Must only be used in using statement.
-        /// </summary>
-        /// <example>
-        /// 
-        /// using(Atom.NoWatch)
-        /// {
-        ///     // ...
-        /// }
-        /// 
-        /// </example>
-        public static IDisposable NoWatch => WatchScope.Enter();
 
         /// <summary>
         /// Creates an atom that store the value.
@@ -32,7 +18,7 @@ namespace UniMob
         /// <returns>Created atom.</returns>
         /// <example>
         /// 
-        /// var counter = Atom.Value();
+        /// var counter = Atom.Value(Lifetime, 0);
         /// counter.Value += 1;
         /// 
         /// Debug.Log(counter.Value);
@@ -43,9 +29,24 @@ namespace UniMob
             return new ValueAtom<T>(lifetime, debugName, value);
         }
 
+        /// <summary>
+        /// Creates an atom that store the value.
+        /// </summary>
+        /// <param name="value">Initial value.</param>
+        /// <param name="debugName">Debug name for this atom.</param>
+        /// <typeparam name="T">Atom value type.</typeparam>
+        /// <returns>Created atom.</returns>
+        /// <example>
+        /// 
+        /// var counter = Atom.Value(0);
+        /// counter.Value += 1;
+        /// 
+        /// Debug.Log(counter.Value);
+        /// 
+        /// </example>
         public static MutableAtom<T> Value<T>(T value, string debugName = null)
         {
-            return new ValueAtom<T>(Lifetime.Eternal, debugName, value);
+            return Value(Lifetime.Eternal, value, debugName);
         }
 
         /// <summary>
@@ -72,15 +73,15 @@ namespace UniMob
         /// var a = Atom.Value(1);
         /// var b = Atom.Value(2);
         /// 
-        /// var sum = Atom.Computed(() => a.Value + b.Value);
+        /// var sum = Atom.Computed(Lifetime, () => a.Value + b.Value);
         /// 
         /// Debug.Log(sum.Value);
         /// 
         /// </example>
-        public static Atom<T> Computed<T>(Lifetime lifetime, AtomPull<T> pull,
+        public static Atom<T> Computed<T>(Lifetime lifetime, Func<T> pull,
             bool keepAlive = false, string debugName = null)
         {
-            return new ComputedAtom<T>(lifetime, debugName, pull, null, keepAlive);
+            return new ComputedAtom<T>(lifetime, debugName, pull, keepAlive);
         }
 
         /// <summary>
@@ -108,32 +109,15 @@ namespace UniMob
         /// var a = Atom.Value(1);
         /// var b = Atom.Value(2);
         /// 
-        /// var sum = Atom.Computed(() => a.Value + b.Value);
+        /// var sum = Atom.Computed(Lifetime, () => a.Value + b.Value);
         /// 
         /// Debug.Log(sum.Value);
         /// 
         /// </example>
-        public static MutableAtom<T> Computed<T>(Lifetime lifetime, AtomPull<T> pull, AtomPush<T> push,
+        public static MutableAtom<T> Computed<T>(Lifetime lifetime, Func<T> pull, Action<T> push,
             bool keepAlive = false, string debugName = null)
         {
-            return new ComputedAtom<T>(lifetime, debugName, pull, push, keepAlive);
-        }
-
-        private class WatchScope : IDisposable
-        {
-            private static readonly WatchScope Instance = new WatchScope();
-
-            public static IDisposable Enter()
-            {
-                AtomBase.Stack.Push(null);
-
-                return Instance;
-            }
-
-            public void Dispose()
-            {
-                AtomBase.Stack.Pop();
-            }
+            return new MutableComputedAtom<T>(lifetime, debugName, pull, push, keepAlive);
         }
     }
 }

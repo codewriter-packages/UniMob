@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-namespace UniMob
+namespace UniMob.Core
 {
     public class AtomScheduler : MonoBehaviour
     {
@@ -53,7 +53,7 @@ namespace UniMob
             {
                 var atom = _updatingCurrentFrame.Dequeue();
 
-                if (atom.IsActive && atom.State != AtomBase.AtomState.Actual)
+                if (atom.IsActive && atom.state != AtomBase.AtomState.Actual)
                 {
                     atom.Actualize();
                 }

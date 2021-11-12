@@ -1,9 +1,17 @@
 using System;
+using System.Threading;
 using JetBrains.Annotations;
 using UnityEngine;
 
 namespace UniMob
 {
+    /// <summary>
+    /// Lifetime has two main functions:<br/>
+    /// 1. High performance analogue of <see cref="CancellationToken"/>. <see cref="LifetimeController"/> is analogue of <see cref="CancellationTokenSource"/> <br/>
+    /// 2. Inversion of <see cref="IDisposable"/> pattern:
+    /// user can add disposable resources into Lifetime with bunch of <c>Register</c> (e.g. <see cref="Register(Action)"/>) methods.
+    /// When lifetime is being disposed all previously added disposable resources are being disposed in stack-way LIFO order.
+    /// </summary>
     public readonly struct Lifetime : IEquatable<Lifetime>
     {
         private readonly ILifetimeController _controller;
@@ -15,25 +23,42 @@ namespace UniMob
             _controller = controller ?? throw new ArgumentNullException(nameof(controller));
         }
 
-        internal void Register(AtomBase atom)
-        {
-            Controller.Register(atom);
-        }
-
+        /// <summary>
+        /// Add action that will be invoked when lifetime disposing start
+        /// </summary>
+        /// <param name="action">Action to invoke.</param>
         public void Register(Action action)
         {
             Controller.Register(action);
         }
 
+        /// <summary>
+        /// Add disposable object that will be disposed when lifetime disposing start
+        /// </summary>
+        /// <param name="disposable">Disposable object</param>
         public void Register(IDisposable disposable)
         {
             Controller.Register(disposable);
         }
 
+        /// <summary>
+        /// Whether current lifetime is equal to <see cref="Eternal"/> and never be disposed
+        /// </summary>
         public bool IsEternal => this == LifetimeController.Eternal.Lifetime;
+
+        /// <summary>
+        /// Whether current lifetime is disposed
+        /// </summary>
         public bool IsDisposed => Controller.IsDisposed;
 
+        /// <summary>
+        /// A lifetime that never ends. Scheduling actions on such a lifetime has no effect.
+        /// </summary>
         public static Lifetime Eternal => LifetimeController.Eternal.Lifetime;
+
+        /// <summary>
+        /// Singleton lifetime that disposed by default.  
+        /// </summary>
         public static Lifetime Terminated => LifetimeController.Terminated.Lifetime;
 
         public bool Equals(Lifetime other)
@@ -41,6 +66,10 @@ namespace UniMob
             return ReferenceEquals(Controller, other.Controller);
         }
 
+        /// <summary>
+        /// Create lifetime controller nested into current lifetime.
+        /// </summary>
+        /// <returns>Created nested lifetime controller.</returns>
         public ILifetimeController CreateNested()
         {
             var nested = new LifetimeController();
@@ -75,7 +104,6 @@ namespace UniMob
         Lifetime Lifetime { get; }
 
         void Register(Action action);
-        void Register(AtomBase atom);
         void Register(IDisposable disposable);
     }
 
@@ -101,11 +129,6 @@ namespace UniMob
         public void Register([NotNull] Action action)
         {
             RegisterInternal(action);
-        }
-
-        public void Register([NotNull] AtomBase atom)
-        {
-            RegisterInternal(atom);
         }
 
         public void Register([NotNull] IDisposable disposable)
@@ -138,10 +161,6 @@ namespace UniMob
                 {
                     switch (registrations[i])
                     {
-                        case AtomBase atom:
-                            atom.Deactivate();
-                            break;
-
                         case IDisposable disposable:
                             disposable.Dispose();
                             break;

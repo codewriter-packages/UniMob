@@ -3,26 +3,27 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
-namespace UniMob
+namespace UniMob.Core
 {
-    public abstract class AtomBase : IEquatable<AtomBase>
+    public abstract class AtomBase : IEquatable<AtomBase>, IDisposable
     {
         private readonly string _debugName;
         private List<AtomBase> _children;
         private List<AtomBase> _subscribers;
-        public AtomOptions options;
 
-        internal AtomState State = AtomState.Obsolete;
+        internal AtomOptions options;
+        internal AtomState state = AtomState.Obsolete;
 
         [CanBeNull] public IReadOnlyList<AtomBase> Children => _children;
         [CanBeNull] public IReadOnlyList<AtomBase> Subscribers => _subscribers;
 
         public int SubscribersCount => _subscribers?.Count ?? 0;
         public string DebugName => _debugName;
-
         public bool IsActive => options.Has(AtomOptions.Active);
+        public bool IsDisposed => options.Has(AtomOptions.Disposed);
+        public AtomState State => state;
 
-        internal enum AtomState
+        public enum AtomState : byte
         {
             Obsolete,
             Checking,
@@ -31,14 +32,15 @@ namespace UniMob
         }
 
         [Flags]
-        public enum AtomOptions
+        public enum AtomOptions : byte
         {
             None = 0,
             AutoActualize = 1 << 0,
             Active = 1 << 1,
-            
-            HasCache = 1 << 2,
-            NextDirectEvaluate = 1 << 3,
+            Disposed = 1 << 2,
+
+            HasCache = 1 << 6,
+            NextDirectEvaluate = 1 << 7,
         }
 
         internal AtomBase(Lifetime lifetime, string debugName, AtomOptions options)
@@ -52,6 +54,11 @@ namespace UniMob
         public bool Equals(AtomBase other)
         {
             return ReferenceEquals(this, other);
+        }
+
+        void IDisposable.Dispose()
+        {
+            Deactivate();
         }
 
         public virtual void Deactivate()
@@ -74,40 +81,40 @@ namespace UniMob
                 }
             }
 
-            if (IsActive)
+            if (options.Has(AtomOptions.Active))
             {
                 options.Reset(AtomOptions.Active);
                 AtomRegistry.OnInactivate(this);
             }
 
-            State = AtomState.Obsolete;
+            state = AtomState.Obsolete;
         }
 
         public void Actualize(bool force = false)
         {
-            if (State == AtomState.Pulling)
+            if (state == AtomState.Pulling)
             {
                 throw new CyclicAtomDependencyException(this);
             }
 
-            if (!force && State == AtomState.Actual)
+            if (!force && state == AtomState.Actual)
             {
                 return;
             }
 
             Stack.Push(this);
 
-            if (!IsActive)
+            if (!options.Has(AtomOptions.Active))
             {
                 options.Set(AtomOptions.Active);
                 AtomRegistry.OnActivate(this);
             }
 
-            if (!force && State == AtomState.Checking)
+            if (!force && state == AtomState.Checking)
             {
                 for (var i = 0; i < _children.Count; i++)
                 {
-                    if (State != AtomState.Checking)
+                    if (state != AtomState.Checking)
                     {
                         break;
                     }
@@ -115,13 +122,13 @@ namespace UniMob
                     _children[i].Actualize();
                 }
 
-                if (State == AtomState.Checking)
+                if (state == AtomState.Checking)
                 {
-                    State = AtomState.Actual;
+                    state = AtomState.Actual;
                 }
             }
 
-            if (force || State != AtomState.Actual)
+            if (force || state != AtomState.Actual)
             {
                 var oldChildren = _children;
                 if (oldChildren != null)
@@ -136,7 +143,7 @@ namespace UniMob
                     DeleteList(ref oldChildren);
                 }
 
-                State = AtomState.Pulling;
+                state = AtomState.Pulling;
 
                 Evaluate();
             }
@@ -176,21 +183,21 @@ namespace UniMob
 
         private void Check()
         {
-            if (State == AtomState.Actual || State == AtomState.Pulling)
+            if (state == AtomState.Actual || state == AtomState.Pulling)
             {
-                State = AtomState.Checking;
+                state = AtomState.Checking;
                 CheckSubscribers();
             }
         }
 
         private void Obsolete()
         {
-            if (State == AtomState.Obsolete)
+            if (state == AtomState.Obsolete)
             {
                 return;
             }
 
-            State = AtomState.Obsolete;
+            state = AtomState.Obsolete;
             CheckSubscribers();
         }
 

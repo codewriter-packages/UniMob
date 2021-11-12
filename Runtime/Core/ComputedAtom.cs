@@ -4,28 +4,25 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using JetBrains.Annotations;
 
-namespace UniMob
+namespace UniMob.Core
 {
-    public sealed class ComputedAtom<T> : AtomBase, MutableAtom<T>
+    public class ComputedAtom<T> : AtomBase, Atom<T>
     {
-        private readonly IEqualityComparer<T> _comparer;
-        private readonly AtomPull<T> _pull;
-        private readonly AtomPush<T> _push;
+        private readonly Func<T> _pull;
+        protected readonly IEqualityComparer<T> comparer;
 
-        private T _cache;
-        private ExceptionDispatchInfo _exception;
+        protected T cache;
+        protected ExceptionDispatchInfo exception;
 
         internal ComputedAtom(
             Lifetime lifetime,
             string debugName,
-            [NotNull] AtomPull<T> pull,
-            AtomPush<T> push,
+            [NotNull] Func<T> pull,
             bool keepAlive = false)
             : base(lifetime, debugName, keepAlive ? AtomOptions.AutoActualize : AtomOptions.None)
         {
             _pull = pull ?? throw new ArgumentNullException(nameof(pull));
-            _push = push;
-            _comparer = EqualityComparer<T>.Default;
+            comparer = EqualityComparer<T>.Default;
         }
 
         // for CodeGen
@@ -36,9 +33,10 @@ namespace UniMob
         }
 
         // for CodeGen
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool CompareAndInvalidate(T value)
         {
-            if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
+            if (options.Has(AtomOptions.HasCache) && comparer.Equals(value, cache))
             {
                 return false;
             }
@@ -51,7 +49,7 @@ namespace UniMob
         {
             get
             {
-                if (State == AtomState.Pulling)
+                if (state == AtomState.Pulling)
                 {
                     throw new CyclicAtomDependencyException(this);
                 }
@@ -59,28 +57,12 @@ namespace UniMob
                 SubscribeToParent();
                 Actualize();
 
-                if (_exception != null)
+                if (exception != null)
                 {
-                    _exception.Throw();
+                    exception.Throw();
                 }
 
-                return _cache;
-            }
-            set
-            {
-                if (_push == null)
-                {
-                    throw new InvalidOperationException("It is not possible to assign a new value to a readonly Atom");
-                }
-
-                if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
-                {
-                    return;
-                }
-
-                Invalidate();
-
-                _push(value);
+                return cache;
             }
         }
 
@@ -89,8 +71,8 @@ namespace UniMob
             base.Deactivate();
 
             options.Reset(AtomOptions.HasCache);
-            _cache = default;
-            _exception = null;
+            cache = default;
+            exception = null;
         }
 
         protected override void Evaluate()
@@ -99,33 +81,33 @@ namespace UniMob
 
             try
             {
-                State = AtomState.Pulling;
+                state = AtomState.Pulling;
                 options.Set(AtomOptions.NextDirectEvaluate);
 
                 var value = _pull();
 
-                if (options.Has(AtomOptions.HasCache) && _comparer.Equals(value, _cache))
+                if (options.Has(AtomOptions.HasCache) && comparer.Equals(value, cache))
                 {
                     return;
                 }
 
-                changed = options.Has(AtomOptions.HasCache) || _exception != null;
+                changed = options.Has(AtomOptions.HasCache) || exception != null;
 
                 options.Set(AtomOptions.HasCache);
-                _cache = value;
-                _exception = null;
+                cache = value;
+                exception = null;
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
                 changed = true;
 
                 options.Reset(AtomOptions.HasCache);
-                _cache = default;
-                _exception = ExceptionDispatchInfo.Capture(exception);
+                cache = default;
+                exception = ExceptionDispatchInfo.Capture(ex);
             }
             finally
             {
-                State = AtomState.Actual;
+                state = AtomState.Actual;
                 options.Reset(AtomOptions.NextDirectEvaluate);
             }
 
@@ -137,11 +119,11 @@ namespace UniMob
 
         public void Invalidate()
         {
-            State = AtomState.Obsolete;
+            state = AtomState.Obsolete;
 
             options.Reset(AtomOptions.HasCache);
-            _cache = default;
-            _exception = null;
+            cache = default;
+            exception = null;
 
             ObsoleteSubscribers();
         }

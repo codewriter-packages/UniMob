@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 
-namespace UniMob
+namespace UniMob.Core
 {
-    internal class ValueAtom<T> : AtomBase, MutableAtom<T>
+    public class ValueAtom<T> : AtomBase, MutableAtom<T>
     {
         private readonly IEqualityComparer<T> _comparer;
         private T _value;
@@ -38,12 +38,12 @@ namespace UniMob
 
         protected override void Evaluate()
         {
-            State = AtomState.Actual;
+            state = AtomState.Actual;
         }
 
         public void Invalidate()
         {
-            State = AtomState.Obsolete;
+            state = AtomState.Obsolete;
 
             ObsoleteSubscribers();
         }

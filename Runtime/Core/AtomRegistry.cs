@@ -7,7 +7,7 @@ using UnityEditor;
 
 #endif
 
-namespace UniMob
+namespace UniMob.Core
 {
     internal static class AtomRegistry
     {

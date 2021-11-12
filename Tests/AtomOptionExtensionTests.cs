@@ -1,5 +1,6 @@
 using NUnit.Framework;
-using Flag = UniMob.AtomBase.AtomOptions;
+using UniMob.Core;
+using Flag = UniMob.Core.AtomBase.AtomOptions;
 
 namespace UniMob.Tests
 {

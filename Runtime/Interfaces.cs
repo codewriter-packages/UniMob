@@ -6,11 +6,6 @@ namespace UniMob
         /// <summary>
         /// Gets the value of the current Atom instance.<br/>
         /// </summary>
-        /// <remarks>
-        /// Will start tracking the value of the current atom if the function
-        /// is called inside a reaction. Otherwise, the value will be accessed directly,
-        /// as if getting the value of a regular property.
-        /// </remarks>
         T Value { get; }
 
         /// <summary>
@@ -25,5 +20,30 @@ namespace UniMob
         /// and the atom will continue to work as usual.
         /// </summary>
         void Invalidate();
+    }
+
+    // ReSharper disable once InconsistentNaming
+    public interface MutableAtom<T> : Atom<T>
+    {
+        /// <summary>
+        /// Gets the value of the current Atom instance.<br/>
+        /// </summary>
+        new T Value { get; set; }
+    }
+
+    // ReSharper disable once InconsistentNaming
+    public interface Reaction
+    {
+        /// <summary>
+        /// Starts reaction.
+        /// </summary>
+        /// <param name="force"></param>
+        void Activate(bool force = false);
+
+        /// <summary>
+        /// Suspends reaction and clean up all subscriptions.<br/>
+        /// Note, that reaction will be restarted if it will be activated again.
+        /// </summary>
+        void Deactivate();
     }
 }

@@ -1,13 +1,12 @@
 using System;
 using UnityEngine;
 
-namespace UniMob
+namespace UniMob.Core
 {
-    internal class ReactionAtom : AtomBase, Reaction
+    public class ReactionAtom : AtomBase, Reaction
     {
         private readonly Action _reaction;
         private readonly Action<Exception> _exceptionHandler;
-        private readonly string _debugName;
 
         public ReactionAtom(
             Lifetime lifetime,
@@ -20,14 +19,14 @@ namespace UniMob
             _exceptionHandler = exceptionHandler ?? Debug.LogException;
         }
 
-        public void Activate()
+        public void Activate(bool force = false)
         {
-            Actualize();
+            Actualize(force);
         }
 
         protected override void Evaluate()
         {
-            State = AtomState.Actual;
+            state = AtomState.Actual;
 
             try
             {

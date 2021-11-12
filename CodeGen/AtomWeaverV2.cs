@@ -1,10 +1,12 @@
 // ReSharper disable FieldCanBeMadeReadOnly.Local
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
+using UniMob.Core;
 using Unity.CompilationPipeline.Common.Diagnostics;
 
 namespace UniMob.Editor.Weaver
@@ -62,7 +64,7 @@ namespace UniMob.Editor.Weaver
             _lifetimeScopeInterfaceType = _module.ImportReference(typeof(ILifetimeScope));
 
             var atomTypeDef = _atomType.Resolve();
-            var atomPullDef = _module.ImportReference(typeof(AtomPull<>)).Resolve();
+            var atomPullDef = _module.ImportReference(typeof(Func<>)).Resolve();
             var atomFactoryDef = _module.ImportReference(typeof(CodeGenAtom)).Resolve();
 
             _atomGetValueMethod = _module.ImportReference(atomTypeDef.FindProperty(ValuePropertyName).GetMethod);

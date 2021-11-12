@@ -1,4 +1,5 @@
 using System;
+using UniMob.Core;
 
 namespace UniMob.Tests
 {
@@ -13,7 +14,7 @@ namespace UniMob.Tests
 
             throw new InvalidOperationException($"{nameof(atom)} is not AtomBase");
         }
-        
+
         public static bool IsActive<T>(this Atom<T> atom)
         {
             if (atom is AtomBase atomBase)

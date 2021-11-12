@@ -14,8 +14,8 @@ namespace UniMob
         /// Returns a reaction, allowing you to cancel it manually.
         /// </summary>
         /// <param name="lifetime">Reaction lifetime.</param>
-        /// <param name="p">An observed predicate function.</param>
-        /// <param name="sideEffect">An effect function.</param>
+        /// <param name="data">An observed predicate function.</param>
+        /// <param name="effect">An effect function.</param>
         /// <param name="exceptionHandler">A function that called when an exception is thrown while computing an reaction.</param>
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <returns>Created reaction.</returns>
@@ -23,7 +23,7 @@ namespace UniMob
         /// 
         /// var counter = Atom.Value(1);
         /// 
-        /// var reaction = Atom.When(
+        /// var reaction = Atom.When(Lifetime,
         ///     () => counter.Value == 10,
         ///     () => Debug.Log("Counter value equals 10")
         /// );
@@ -31,8 +31,8 @@ namespace UniMob
         /// </example>
         public static Reaction When(
             Lifetime lifetime,
-            Func<bool> p,
-            Action sideEffect,
+            Func<bool> data,
+            Action effect,
             Action<Exception> exceptionHandler = null,
             string debugName = null)
         {
@@ -45,7 +45,7 @@ namespace UniMob
                 Exception exception = null;
                 try
                 {
-                    if (!p())
+                    if (!data())
                     {
                         return;
                     }
@@ -69,7 +69,7 @@ namespace UniMob
                     }
                     else
                     {
-                        sideEffect();
+                        effect();
                     }
 
                     controller.Dispose();
@@ -85,20 +85,20 @@ namespace UniMob
         /// The task will fail if the predicate throws an exception.
         /// </summary>
         /// <param name="lifetime">Reaction lifetime.</param>
-        /// <param name="p">An observed predicate function.</param>
+        /// <param name="data">An observed predicate function.</param>
         /// <param name="debugName">Debug name for this reaction.</param>
         /// <returns>Task that completes when the predicate returns true or predicate function throws exception.</returns>
         /// <example>
         /// 
         /// var counter = Atom.Value(1);
         /// 
-        /// await Atom.When(() => counter.Value == 10);
+        /// await Atom.When(Lifetime, () => counter.Value == 10);
         /// Debug.Log("Counter value equals 10");
         /// 
         /// </example>
         public static Task When(
             Lifetime lifetime,
-            Func<bool> p,
+            Func<bool> data,
             string debugName = null)
         {
             var controller = lifetime.CreateNested();
@@ -115,7 +115,7 @@ namespace UniMob
                 Exception exception = null;
                 try
                 {
-                    if (!p())
+                    if (!data())
                     {
                         return;
                     }
