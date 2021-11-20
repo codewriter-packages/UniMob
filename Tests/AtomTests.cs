@@ -443,7 +443,7 @@ namespace UniMob.Tests
             var reaction = Atom.Reaction(Lifetime, () => computed.Get());
 
             Assert.IsTrue(computedBase.IsActive);
-            Assert.AreEqual(1, computedBase.Children?.Count ?? 0);
+            Assert.AreEqual(1, computedBase.childrenCount);
 
             using (Atom.NoWatch)
             {
@@ -454,7 +454,7 @@ namespace UniMob.Tests
                 Assert.AreEqual(2, computed.Value);
             }
 
-            Assert.AreEqual(1, computedBase.Children?.Count ?? 0);
+            Assert.AreEqual(1, computedBase.childrenCount);
 
             reaction.Deactivate();
         }

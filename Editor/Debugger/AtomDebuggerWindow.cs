@@ -114,8 +114,8 @@ namespace UniMob
 
             _selectedAtomScroll = GUILayout.BeginScrollView(_selectedAtomScroll);
             {
-                DrawAtomCollection("Used By", _selectedAtom.Subscribers, _ => true);
-                DrawAtomCollection("Uses", _selectedAtom.Children, _ => true);
+                DrawAtomCollection("Used By", _selectedAtom.subscribers, _selectedAtom.subscribersCount, _ => true);
+                DrawAtomCollection("Uses", _selectedAtom.children, _selectedAtom.childrenCount, _ => true);
             }
             GUILayout.EndScrollView();
         }
@@ -135,7 +135,7 @@ namespace UniMob
 
             _activeAtomsScroll = GUILayout.BeginScrollView(_activeAtomsScroll);
             {
-                DrawAtomCollection("Active Atoms", _activeAtoms, atom =>
+                DrawAtomCollection("Active Atoms", _activeAtoms, _activeAtoms.Count, atom =>
                 {
                     if (rootsOnly)
                     {
@@ -151,7 +151,7 @@ namespace UniMob
         }
 
         private void DrawAtomCollection(string collectionName, IReadOnlyList<AtomBase> list,
-            Func<AtomBase, bool> filter)
+            int count, Func<AtomBase, bool> filter)
         {
             list = list ?? EmptyList;
 
@@ -165,8 +165,9 @@ namespace UniMob
             }
             else
             {
-                foreach (var atom in list)
+                for (var index = 0; index < count; index++)
                 {
+                    var atom = list[index];
                     if (!filter(atom))
                     {
                         continue;

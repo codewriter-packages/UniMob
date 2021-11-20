@@ -9,7 +9,7 @@ namespace UniMob.Tests
         {
             if (atom is AtomBase atomBase)
             {
-                return atomBase.SubscribersCount;
+                return atomBase.subscribersCount;
             }
 
             throw new InvalidOperationException($"{nameof(atom)} is not AtomBase");

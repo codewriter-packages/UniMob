@@ -8,16 +8,18 @@ namespace UniMob.Core
     public abstract class AtomBase : IEquatable<AtomBase>, IDisposable
     {
         private readonly string _debugName;
-        private List<AtomBase> _children;
-        private List<AtomBase> _subscribers;
+
+        internal byte childrenCap;
+        internal int childrenCount;
+        internal AtomBase[] children;
+
+        internal byte subscribersCap;
+        internal int subscribersCount;
+        internal AtomBase[] subscribers;
 
         internal AtomOptions options;
         internal AtomState state = AtomState.Obsolete;
 
-        [CanBeNull] public IReadOnlyList<AtomBase> Children => _children;
-        [CanBeNull] public IReadOnlyList<AtomBase> Subscribers => _subscribers;
-
-        public int SubscribersCount => _subscribers?.Count ?? 0;
         public string DebugName => _debugName;
         public bool IsActive => options.Has(AtomOptions.Active);
         public bool IsDisposed => options.Has(AtomOptions.Disposed);
@@ -63,21 +65,24 @@ namespace UniMob.Core
 
         public virtual void Deactivate()
         {
-            if (_children != null)
+            if (children != null)
             {
-                for (var i = 0; i < _children.Count; i++)
+                for (var i = 0; i < childrenCount; i++)
                 {
-                    _children[i].RemoveSubscriber(this);
+                    children[i].RemoveSubscriber(this);
+                    children[i] = null;
                 }
 
-                DeleteList(ref _children);
+                childrenCount = 0;
+                ArrayPool<AtomBase>.Return(ref children, childrenCap);
+                childrenCap = 0;
             }
 
-            if (_subscribers != null)
+            if (subscribers != null)
             {
-                for (var i = 0; i < _subscribers.Count; i++)
+                for (var i = 0; i < subscribersCount; i++)
                 {
-                    _subscribers[i].Check();
+                    subscribers[i].Check();
                 }
             }
 
@@ -112,14 +117,14 @@ namespace UniMob.Core
 
             if (!force && state == AtomState.Checking)
             {
-                for (var i = 0; i < _children.Count; i++)
+                for (var i = 0; i < childrenCount; i++)
                 {
                     if (state != AtomState.Checking)
                     {
                         break;
                     }
 
-                    _children[i].Actualize();
+                    children[i].Actualize();
                 }
 
                 if (state == AtomState.Checking)
@@ -130,19 +135,13 @@ namespace UniMob.Core
 
             if (force || state != AtomState.Actual)
             {
-                var oldChildren = _children;
-                if (oldChildren != null)
+                for (var i = 0; i < childrenCount; i++)
                 {
-                    _children = null;
-
-                    for (var i = 0; i < oldChildren.Count; i++)
-                    {
-                        oldChildren[i].RemoveSubscriber(this);
-                    }
-
-                    DeleteList(ref oldChildren);
+                    children[i].RemoveSubscriber(this);
+                    children[i] = null;
                 }
 
+                childrenCount = 0;
                 state = AtomState.Pulling;
 
                 Evaluate();
@@ -155,24 +154,24 @@ namespace UniMob.Core
 
         protected void ObsoleteSubscribers()
         {
-            if (_subscribers == null)
+            if (subscribers == null)
             {
                 return;
             }
 
-            for (var i = 0; i < _subscribers.Count; i++)
+            for (var i = 0; i < subscribersCount; i++)
             {
-                _subscribers[i].Obsolete();
+                subscribers[i].Obsolete();
             }
         }
 
         private void CheckSubscribers()
         {
-            if (_subscribers != null)
+            if (subscribers != null)
             {
-                for (var i = 0; i < _subscribers.Count; i++)
+                for (var i = 0; i < subscribersCount; i++)
                 {
-                    _subscribers[i].Check();
+                    subscribers[i].Check();
                 }
             }
             else if (options.Has(AtomOptions.AutoActualize))
@@ -203,37 +202,56 @@ namespace UniMob.Core
 
         protected void AddSubscriber(AtomBase subscriber)
         {
-            if (_subscribers == null)
+            if (subscribers == null)
             {
-                CreateList(out _subscribers);
+                ArrayPool<AtomBase>.Rent(ref subscribers, subscribersCap);
+            }
+            else if (subscribers.Length == subscribersCount)
+            {
+                ArrayPool<AtomBase>.Grow(ref subscribers, ref subscribersCap);
             }
 
-            _subscribers.Add(subscriber);
+            subscribers[subscribersCount] = subscriber;
+            subscribersCount++;
         }
 
         private void RemoveSubscriber(AtomBase subscriber)
         {
-            if (_subscribers == null)
+            if (subscribers == null)
             {
                 return;
             }
 
-            _subscribers.Remove(subscriber);
-
-            if (_subscribers.Count == 0)
+            var index = 0;
+            while (subscribers[index] != subscriber)
             {
-                DeleteList(ref _subscribers);
+                index++;
+            }
+
+            subscribers[index] = subscribers[subscribersCount - 1];
+            subscribers[subscribersCount - 1] = null;
+            subscribersCount--;
+
+            if (subscribersCount == 0)
+            {
+                ArrayPool<AtomBase>.Return(ref subscribers, subscribersCap);
+                subscribersCap = 0;
             }
         }
 
         internal void AddChildren(AtomBase child)
         {
-            if (_children == null)
+            if (children == null)
             {
-                CreateList(out _children);
+                ArrayPool<AtomBase>.Rent(ref children, childrenCap);
+            }
+            else if (children.Length == childrenCount)
+            {
+                ArrayPool<AtomBase>.Grow(ref children, ref childrenCap);
             }
 
-            _children.Add(child);
+            children[childrenCount] = child;
+            childrenCount++;
         }
 
         protected void SubscribeToParent()
@@ -256,20 +274,6 @@ namespace UniMob.Core
         static AtomBase()
         {
             Stack.Push(null);
-        }
-
-        private static readonly Stack<List<AtomBase>> ListPool = new Stack<List<AtomBase>>();
-
-        private static void CreateList(out List<AtomBase> list)
-        {
-            list = ListPool.Count > 0 ? ListPool.Pop() : new List<AtomBase>();
-        }
-
-        private static void DeleteList(ref List<AtomBase> list)
-        {
-            list.Clear();
-            ListPool.Push(list);
-            list = null;
         }
     }
 
