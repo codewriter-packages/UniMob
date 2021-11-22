@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UniMob.Core;
 
 namespace UniMob
@@ -24,16 +25,19 @@ namespace UniMob
         {
             private static readonly WatchScope Instance = new WatchScope();
 
+            private static readonly Stack<AtomBase> WatchStack = new Stack<AtomBase>();
+
             public static IDisposable Enter()
             {
-                AtomBase.Stack.Push(null);
+                WatchStack.Push(AtomBase.Stack);
+                AtomBase.Stack = null;
 
                 return Instance;
             }
 
             public void Dispose()
             {
-                AtomBase.Stack.Pop();
+                AtomBase.Stack = WatchStack.Pop();
             }
         }
     }

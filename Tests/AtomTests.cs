@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using NUnit.Framework;
 using UniMob.Core;
+using UnityEngine;
+using UnityEngine.TestTools;
+using Random = System.Random;
 
 namespace UniMob.Tests
 {
@@ -29,7 +31,7 @@ namespace UniMob.Tests
         {
             var target = Atom.Computed(Lifetime, () => 1);
 
-            Assert.IsFalse(target.IsActive());
+            AtomAssert.That(target).IsNotActive();
         }
 
         [Test]
@@ -39,7 +41,7 @@ namespace UniMob.Tests
 
             target.Get();
 
-            Assert.IsTrue(target.IsActive());
+            AtomAssert.That(target).IsActive();
         }
 
         [Test]
@@ -49,7 +51,7 @@ namespace UniMob.Tests
 
             Atom.Reaction(Lifetime, () => target.Get());
 
-            Assert.IsTrue(target.IsActive());
+            AtomAssert.That(target).IsActive();
         }
 
         [Test]
@@ -63,7 +65,7 @@ namespace UniMob.Tests
                 target.Get();
             }
 
-            Assert.IsFalse(target.IsActive());
+            AtomAssert.That(target).IsNotActive();
         }
 
         [Test]
@@ -76,7 +78,8 @@ namespace UniMob.Tests
                 Atom.Reaction(nested.Lifetime, () => target.Get());
             }
 
-            Assert.IsTrue(target.IsActive());
+            AtomAssert.That(target).SubscribersCountAreEqualTo(0);
+            AtomAssert.That(target).IsActive();
         }
 
         [Test]
@@ -86,7 +89,8 @@ namespace UniMob.Tests
         {
             var atom = type == "Value" ? Atom.Value(Lifetime, 1) : Atom.Computed(Lifetime, () => 1);
             atom.Get();
-            Assert.IsTrue(atom.IsActive());
+
+            AtomAssert.That(atom).IsActive();
         }
 
         [Test]
@@ -99,7 +103,7 @@ namespace UniMob.Tests
             atom.Value = 2;
             atom.Get();
 
-            Assert.IsTrue(atom.IsActive());
+            AtomAssert.That(atom).IsActive();
         }
 
         [Test]
@@ -112,14 +116,14 @@ namespace UniMob.Tests
             atom.Invalidate();
             atom.Get();
 
-            Assert.IsTrue(atom.IsActive());
+            AtomAssert.That(atom).IsActive();
         }
 
         [Test]
         public void Caching()
         {
             var random = new Random();
-            var atom = Atom.Computed(Lifetime, () => random.Next() /*, keepAlive: true*/);
+            var atom = Atom.Computed(Lifetime, () => random.Next());
 
             Assert.AreEqual(atom.Value, atom.Value);
         }
@@ -162,7 +166,7 @@ namespace UniMob.Tests
             {
                 ++targetUpdates;
                 return middle.Value;
-            } /*, keepAlive: true*/);
+            });
 
             target.Get();
             Assert.AreEqual(1, target.Value);
@@ -183,30 +187,27 @@ namespace UniMob.Tests
             {
                 actualization += "M";
                 return source.Value;
-            });
+            }, keepAlive: true);
             var target = Atom.Computed(Lifetime, () =>
             {
                 actualization += "T";
                 source.Get();
                 return middle.Value;
-            });
+            }, keepAlive: true);
 
-            var autoRun = Atom.Reaction(Lifetime, () => target.Get());
+            target.Get();
             Assert.AreEqual("TM", actualization);
 
             source.Value = 2;
 
             AtomScheduler.Sync();
             Assert.AreEqual("TMTM", actualization);
-
-            autoRun.Deactivate();
         }
 
-
         [Test]
-        public void ReactionAutoActualizes()
+        public void ReactionAutoActualizesOnNextFrame()
         {
-            int targetValue = 0;
+            var targetValue = 0;
 
             var source = Atom.Value(Lifetime, 1);
             var middle = Atom.Computed(Lifetime, () => source.Value + 1);
@@ -265,48 +266,37 @@ namespace UniMob.Tests
         }
 
         [Test]
-        public void ThrowException()
+        public void ExceptionHandling()
         {
-            var source = Atom.Value(Lifetime, 0);
             var exception = new Exception();
-
-            var middle = Atom.Computed(Lifetime, () =>
-            {
-                if (source.Value == 0)
-                    throw exception;
-
-                return source.Value + 1;
-            });
-
             var stack = new Stack<Exception>();
 
-            var reaction = new ReactionAtom(
-                Lifetime,
-                debugName: null,
-                reaction: () => middle.Get(),
-                exceptionHandler: ex => stack.Push(ex));
+            var source = Atom.Value(Lifetime, 1);
+            var middle = Atom.Computed(Lifetime, () => source.Value == 0 ? throw exception : source.Value + 1);
+            Atom.Reaction(Lifetime, () => middle.Get(), ex => stack.Push(ex));
 
-            reaction.Activate();
+            Assert.AreEqual(2, middle.Value);
+
+            source.Value = 0;
+            AtomScheduler.Sync();
 
             Assert.AreEqual(1, stack.Count);
             Assert.AreEqual(exception, stack.Peek());
             Assert.Throws<Exception>(() => middle.Get());
 
-            source.Value = 1;
+            source.Value = 3;
             AtomScheduler.Sync();
 
-            Assert.AreEqual(2, middle.Value);
+            Assert.AreEqual(4, middle.Value);
         }
 
         [Test]
         public void Invalidate()
         {
-            //
+            var actualization = "";
+
             var source = Atom.Value(Lifetime, 0);
-
-            string actualization = "";
-
-            var dispose = Atom.Reaction(Lifetime, () =>
+            Atom.Reaction(Lifetime, () =>
             {
                 source.Get();
                 actualization += "T";
@@ -319,16 +309,14 @@ namespace UniMob.Tests
 
             AtomScheduler.Sync();
             Assert.AreEqual("TT", actualization);
-
-            dispose.Deactivate();
         }
 
         [Test]
         public void AutoRun()
         {
-            var source = Atom.Value(Lifetime, 0);
+            var runs = 0;
 
-            int runs = 0;
+            var source = Atom.Value(Lifetime, 0);
             var disposer = Atom.Reaction(Lifetime, () =>
             {
                 source.Get();
@@ -338,10 +326,10 @@ namespace UniMob.Tests
 
             source.Value++;
             AtomScheduler.Sync();
-
             Assert.AreEqual(2, runs);
 
             disposer.Deactivate();
+
             source.Value++;
             AtomScheduler.Sync();
             Assert.AreEqual(2, runs);
@@ -350,10 +338,9 @@ namespace UniMob.Tests
         [Test]
         public void WhenAtom()
         {
+            var watch = "";
+
             var source = Atom.Value(Lifetime, 0);
-
-            string watch = "";
-
             Atom.When(Lifetime, () => source.Value > 1, () => watch += "B");
 
             AtomScheduler.Sync();
@@ -376,26 +363,21 @@ namespace UniMob.Tests
         public void Reaction()
         {
             var source = Atom.Value(Lifetime, 0);
-            var middle = Atom.Computed(Lifetime,
-                () => source.Value < 0 ? throw new Exception() : source.Value);
+            var middle = Atom.Computed(Lifetime, () => source.Value < 0 ? throw new Exception() : source.Value);
 
             var result = 0;
             var errors = 0;
 
             var nested = Lifetime.CreateNested();
 
-            Atom.Reaction(
-                nested.Lifetime,
-                data: () => middle.Value,
-                effect: value =>
+            Atom.Reaction(nested.Lifetime, () => middle.Value, value =>
+            {
+                result = value;
+                if (value == 2)
                 {
-                    result = value;
-                    if (value == 2)
-                    {
-                        nested.Dispose();
-                    }
-                },
-                exceptionHandler: ex => ++errors);
+                    nested.Dispose();
+                }
+            }, ex => ++errors);
 
             Assert.AreEqual(0, result);
 
@@ -419,31 +401,53 @@ namespace UniMob.Tests
         [Test]
         public void ReactionUpdatesOnce()
         {
-            var source = Atom.Value(Lifetime, 0);
-
             var watch = "";
-            var reaction = Atom.Reaction(Lifetime, () => source.Value, v => watch += "B");
+
+            var source = Atom.Value(Lifetime, 0);
+            Atom.Reaction(Lifetime, () => source.Value, v => watch += "B");
 
             Assert.AreEqual("B", watch);
 
             AtomScheduler.Sync();
             Assert.AreEqual("B", watch);
 
-            reaction.Deactivate();
+            source.Value = 1;
+            AtomScheduler.Sync();
+            Assert.AreEqual("BB", watch);
+        }
+        
+        [Test]
+        public void ReactionWithExceptionUpdatesOnce()
+        {
+            var watch = "";
+
+            var source = Atom.Value(Lifetime, 0);
+            Atom.Reaction<int>(Lifetime, () =>
+            {
+                source.Get();
+                throw new Exception();
+            }, v => watch += "B", exceptionHandler: ex => watch += "E");
+
+            Assert.AreEqual("E", watch);
+
+            AtomScheduler.Sync();
+            Assert.AreEqual("E", watch);
+
+            source.Value = 1;
+            AtomScheduler.Sync();
+            Assert.AreEqual("EE", watch);
         }
 
         [Test]
         public void UnwatchedPullOfObsoleteActiveAtom()
         {
             var source = Atom.Value(Lifetime, 0);
-
             var computed = Atom.Computed(Lifetime, () => source.Value + 1);
-            var computedBase = (AtomBase) computed;
 
             var reaction = Atom.Reaction(Lifetime, () => computed.Get());
 
-            Assert.IsTrue(computedBase.IsActive);
-            Assert.AreEqual(1, computedBase.childrenCount);
+            AtomAssert.That(computed).IsActive();
+            AtomAssert.That(computed).ChildrenCountAreEqualTo(1);
 
             using (Atom.NoWatch)
             {
@@ -454,7 +458,7 @@ namespace UniMob.Tests
                 Assert.AreEqual(2, computed.Value);
             }
 
-            Assert.AreEqual(1, computedBase.childrenCount);
+            AtomAssert.That(computed).ChildrenCountAreEqualTo(1);
 
             reaction.Deactivate();
         }
@@ -467,8 +471,8 @@ namespace UniMob.Tests
             a = Atom.Computed(Lifetime, () => b.Value);
             b = Atom.Computed(Lifetime, () => a.Value);
 
-            Assert.AreEqual(a.SubscribersCount(), 0);
-            Assert.AreEqual(b.SubscribersCount(), 0);
+            AtomAssert.That(a).SubscribersCountAreEqualTo(0);
+            AtomAssert.That(b).SubscribersCountAreEqualTo(0);
             Assert.Throws<CyclicAtomDependencyException>(() => a.Get());
             Assert.Throws<CyclicAtomDependencyException>(() => b.Get());
         }
@@ -478,8 +482,8 @@ namespace UniMob.Tests
         {
             Atom<int> a, b = null;
 
-            a = Atom.Computed(Lifetime, () => b.Value);
-            b = Atom.Computed(Lifetime, () => a.Value);
+            a = Atom.Computed(Lifetime, () => b.Value, debugName: "A");
+            b = Atom.Computed(Lifetime, () => a.Value, debugName: "B");
 
             Exception exception = null;
 
@@ -487,24 +491,60 @@ namespace UniMob.Tests
             {
                 a.Get();
                 b.Get();
-            }, ex => exception = ex);
+            }, ex => exception = ex, debugName: "Reaction");
 
-            Assert.AreEqual(a.SubscribersCount(), 1);
-            Assert.AreEqual(b.SubscribersCount(), 1);
+            AtomAssert.That(a).SubscribersCountAreEqualTo(1);
+            AtomAssert.That(b).SubscribersCountAreEqualTo(1);
+
+            AtomAssert.That(a).IsSubscribedTo(b);
+            AtomAssert.That(reaction).IsSubscribedTo(a);
+
             Assert.Throws<CyclicAtomDependencyException>(() => a.Get());
             Assert.Throws<CyclicAtomDependencyException>(() => b.Get());
             Assert.IsTrue(exception is CyclicAtomDependencyException);
-
-            reaction.Deactivate();
         }
 
         [Test]
-        public void SelfUpdateActualizeNextFrame()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void RecoverAfterCyclicDependency(bool inverseOrder)
         {
-            var source = Atom.Value(Lifetime, 0);
+            var s = Atom.Value(Lifetime, false, "SWITCH");
 
-            int runs = 0;
-            var reaction = Atom.Reaction(Lifetime, () =>
+            Atom<int> a, b = null;
+
+            a = Atom.Computed(Lifetime, () => s.Value ? (b.Value + 1) : 0, debugName: "A");
+            b = Atom.Computed(Lifetime, () => a.Value + 1, debugName: "B");
+
+            Assert.AreEqual(0, a.Value);
+            Assert.AreEqual(1, b.Value);
+
+            s.Value = true;
+
+            if (inverseOrder)
+            {
+                Assert.Throws<CyclicAtomDependencyException>(() => b.Get());
+                Assert.Throws<CyclicAtomDependencyException>(() => a.Get());
+            }
+            else
+            {
+                Assert.Throws<CyclicAtomDependencyException>(() => a.Get());
+                Assert.Throws<CyclicAtomDependencyException>(() => b.Get());
+            }
+
+            s.Value = false;
+
+            Assert.AreEqual(1, b.Value);
+            Assert.AreEqual(0, a.Value);
+        }
+
+        [Test]
+        public void ReactionSelfUpdateActualizeNextFrame()
+        {
+            var runs = 0;
+
+            var source = Atom.Value(Lifetime, 0, debugName: "source");
+            Atom.Reaction(Lifetime, () =>
             {
                 runs++;
 
@@ -516,20 +556,21 @@ namespace UniMob.Tests
                 {
                     Assert.Fail("Unexpected reaction run. Possible infinite recursion");
                 }
-            });
+            }, debugName: "reaction");
 
             Assert.AreEqual(1, runs);
             Assert.AreEqual(1, source.Value);
+            LogAssert.Expect(LogType.Error, "Invalidation of atom (source) in watched scope (reaction) is dangerous");
 
             AtomScheduler.Sync();
             Assert.AreEqual(2, runs);
             Assert.AreEqual(2, source.Value);
+            LogAssert.Expect(LogType.Error, "Invalidation of atom (source) in watched scope (reaction) is dangerous");
 
             AtomScheduler.Sync();
             Assert.AreEqual(3, runs);
             Assert.AreEqual(3, source.Value);
-
-            reaction.Deactivate();
+            LogAssert.Expect(LogType.Error, "Invalidation of atom (source) in watched scope (reaction) is dangerous");
         }
 
         [Test]

@@ -6,7 +6,7 @@ namespace UniMob
 {
     public static partial class Atom
     {
-        [CanBeNull] public static AtomBase CurrentScope => AtomBase.Stack.Peek();
+        [CanBeNull] public static AtomBase CurrentScope => AtomBase.Stack;
 
         /// <summary>
         /// Creates an atom that store the value.

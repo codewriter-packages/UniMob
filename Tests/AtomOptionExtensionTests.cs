@@ -1,6 +1,6 @@
 using NUnit.Framework;
 using UniMob.Core;
-using Flag = UniMob.Core.AtomBase.AtomOptions;
+using Flag = UniMob.Core.AtomOptions;
 
 namespace UniMob.Tests
 {
@@ -51,6 +51,22 @@ namespace UniMob.Tests
         {
             var keys = Flag.Active | Flag.HasCache;
             Assert.IsFalse(keys.TryReset(Flag.NextDirectEvaluate));
+            Assert.AreEqual(Flag.Active | Flag.HasCache, keys);
+        }
+
+        [Test]
+        public void TrySet_ShouldSet()
+        {
+            var keys = Flag.HasCache;
+            Assert.IsTrue(keys.TrySet(Flag.Active));
+            Assert.AreEqual(Flag.HasCache | Flag.Active, keys);
+        }
+
+        [Test]
+        public void TrySet_ShouldNotSet()
+        {
+            var keys = Flag.Active | Flag.HasCache;
+            Assert.IsFalse(keys.TrySet(Flag.Active));
             Assert.AreEqual(Flag.Active | Flag.HasCache, keys);
         }
     }

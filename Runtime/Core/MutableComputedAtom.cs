@@ -5,7 +5,7 @@ namespace UniMob.Core
 {
     public class MutableComputedAtom<T> : ComputedAtom<T>, MutableAtom<T>
     {
-        private readonly Action<T> _push;
+        internal readonly Action<T> push;
 
         internal MutableComputedAtom(
             Lifetime lifetime,
@@ -15,7 +15,7 @@ namespace UniMob.Core
             bool keepAlive = false)
             : base(lifetime, debugName, pull, keepAlive)
         {
-            _push = push ?? throw new ArgumentNullException(nameof(push));
+            this.push = push ?? throw new ArgumentNullException(nameof(push));
         }
 
         public new T Value
@@ -23,14 +23,10 @@ namespace UniMob.Core
             get => base.Value;
             set
             {
-                if (options.Has(AtomOptions.HasCache) && comparer.Equals(value, cache))
+                if (CompareAndInvalidate(value))
                 {
-                    return;
+                    push(value);
                 }
-
-                Invalidate();
-
-                _push(value);
             }
         }
     }

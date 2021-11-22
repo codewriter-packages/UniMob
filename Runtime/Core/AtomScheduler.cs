@@ -53,7 +53,7 @@ namespace UniMob.Core
             {
                 var atom = _updatingCurrentFrame.Dequeue();
 
-                if (atom.IsActive && atom.state != AtomBase.AtomState.Actual)
+                if (atom.options.Has(AtomOptions.Active) && atom.state != AtomState.Actual)
                 {
                     atom.Actualize();
                 }

@@ -97,13 +97,13 @@ namespace UniMob
                 GUILayout.EndHorizontal();
             }
 
-            var state = _selectedAtom.State == AtomBase.AtomState.Actual ? "Actual"
-                : _selectedAtom.State == AtomBase.AtomState.Checking ? "Checking"
-                : _selectedAtom.State == AtomBase.AtomState.Pulling ? "Pulling"
-                : _selectedAtom.State == AtomBase.AtomState.Obsolete ? "Obsolete"
+            var state = _selectedAtom.state == AtomState.Actual ? "Actual"
+                : _selectedAtom.state == AtomState.Checking ? "Checking"
+                : _selectedAtom.state == AtomState.Pulling ? "Pulling"
+                : _selectedAtom.state == AtomState.Obsolete ? "Obsolete"
                 : "Unknown";
 
-            GUILayout.Label(_selectedAtom.DebugName ?? "[Anonymous]", EditorStyles.largeLabel);
+            GUILayout.Label(_selectedAtom.debugName ?? "[Anonymous]", EditorStyles.largeLabel);
             GUILayout.Label(state, EditorStyles.label);
             //if (_selectedAtom.KeepAlive)
             //{
@@ -182,7 +182,7 @@ namespace UniMob
 
         private void DrawAtomButton(AtomBase atom)
         {
-            if (GUILayout.Button(atom.DebugName ?? "[Anonymous]", Styles.LeftButton))
+            if (GUILayout.Button(atom.debugName ?? "[Anonymous]", Styles.LeftButton))
             {
                 _selectedAtom = atom;
             }
@@ -194,7 +194,7 @@ namespace UniMob
 
             public int Compare(AtomBase x, AtomBase y)
             {
-                return string.CompareOrdinal(x?.DebugName ?? string.Empty, y?.DebugName ?? string.Empty);
+                return string.CompareOrdinal(x?.debugName ?? string.Empty, y?.debugName ?? string.Empty);
             }
         }
     }

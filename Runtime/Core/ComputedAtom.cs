@@ -8,11 +8,11 @@ namespace UniMob.Core
 {
     public class ComputedAtom<T> : AtomBase, Atom<T>
     {
-        private readonly Func<T> _pull;
-        protected readonly IEqualityComparer<T> comparer;
+        internal readonly Func<T> pull;
+        internal readonly IEqualityComparer<T> comparer;
 
-        protected T cache;
-        protected ExceptionDispatchInfo exception;
+        internal T cache;
+        internal ExceptionDispatchInfo exception;
 
         internal ComputedAtom(
             Lifetime lifetime,
@@ -21,7 +21,7 @@ namespace UniMob.Core
             bool keepAlive = false)
             : base(lifetime, debugName, keepAlive ? AtomOptions.AutoActualize : AtomOptions.None)
         {
-            _pull = pull ?? throw new ArgumentNullException(nameof(pull));
+            this.pull = pull ?? throw new ArgumentNullException(nameof(pull));
             comparer = EqualityComparer<T>.Default;
         }
 
@@ -49,13 +49,8 @@ namespace UniMob.Core
         {
             get
             {
-                if (state == AtomState.Pulling)
-                {
-                    throw new CyclicAtomDependencyException(this);
-                }
-
-                SubscribeToParent();
                 Actualize();
+                SubscribeToParent();
 
                 if (exception != null)
                 {
@@ -84,7 +79,7 @@ namespace UniMob.Core
                 state = AtomState.Pulling;
                 options.Set(AtomOptions.NextDirectEvaluate);
 
-                var value = _pull();
+                var value = pull();
 
                 if (options.Has(AtomOptions.HasCache) && comparer.Equals(value, cache))
                 {
@@ -99,7 +94,7 @@ namespace UniMob.Core
             }
             catch (Exception ex)
             {
-                changed = true;
+                changed = options.Has(AtomOptions.HasCache) || exception != null;
 
                 options.Reset(AtomOptions.HasCache);
                 cache = default;
@@ -117,15 +112,13 @@ namespace UniMob.Core
             }
         }
 
-        public void Invalidate()
+        public override void Invalidate()
         {
-            state = AtomState.Obsolete;
-
             options.Reset(AtomOptions.HasCache);
             cache = default;
             exception = null;
 
-            ObsoleteSubscribers();
+            base.Invalidate();
         }
     }
 }

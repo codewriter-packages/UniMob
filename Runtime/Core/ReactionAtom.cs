@@ -5,8 +5,8 @@ namespace UniMob.Core
 {
     public class ReactionAtom : AtomBase, Reaction
     {
-        private readonly Action _reaction;
-        private readonly Action<Exception> _exceptionHandler;
+        internal readonly Action reaction;
+        internal readonly Action<Exception> exceptionHandler;
 
         public ReactionAtom(
             Lifetime lifetime,
@@ -15,8 +15,8 @@ namespace UniMob.Core
             Action<Exception> exceptionHandler = null)
             : base(lifetime, debugName, AtomOptions.AutoActualize)
         {
-            _reaction = reaction ?? throw new ArgumentNullException(nameof(reaction));
-            _exceptionHandler = exceptionHandler ?? Debug.LogException;
+            this.reaction = reaction ?? throw new ArgumentNullException(nameof(reaction));
+            this.exceptionHandler = exceptionHandler ?? Debug.LogException;
         }
 
         public void Activate(bool force = false)
@@ -30,11 +30,11 @@ namespace UniMob.Core
 
             try
             {
-                _reaction();
+                reaction();
             }
             catch (Exception exception)
             {
-                _exceptionHandler(exception);
+                exceptionHandler(exception);
             }
         }
     }

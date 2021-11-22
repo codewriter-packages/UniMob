@@ -1,13 +1,14 @@
 using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+using UnityEngine;
 
 namespace UniMob.Core
 {
     public abstract class AtomBase : IEquatable<AtomBase>, IDisposable
     {
-        private readonly string _debugName;
+        [CanBeNull] internal static AtomBase Stack;
+
+        internal readonly string debugName;
 
         internal byte childrenCap;
         internal int childrenCount;
@@ -20,34 +21,9 @@ namespace UniMob.Core
         internal AtomOptions options;
         internal AtomState state = AtomState.Obsolete;
 
-        public string DebugName => _debugName;
-        public bool IsActive => options.Has(AtomOptions.Active);
-        public bool IsDisposed => options.Has(AtomOptions.Disposed);
-        public AtomState State => state;
-
-        public enum AtomState : byte
-        {
-            Obsolete,
-            Checking,
-            Pulling,
-            Actual,
-        }
-
-        [Flags]
-        public enum AtomOptions : byte
-        {
-            None = 0,
-            AutoActualize = 1 << 0,
-            Active = 1 << 1,
-            Disposed = 1 << 2,
-
-            HasCache = 1 << 6,
-            NextDirectEvaluate = 1 << 7,
-        }
-
         internal AtomBase(Lifetime lifetime, string debugName, AtomOptions options)
         {
-            _debugName = debugName;
+            this.debugName = debugName;
             this.options = options;
 
             lifetime.Register(this);
@@ -86,13 +62,24 @@ namespace UniMob.Core
                 }
             }
 
-            if (options.Has(AtomOptions.Active))
+            if (options.TryReset(AtomOptions.Active))
             {
-                options.Reset(AtomOptions.Active);
                 AtomRegistry.OnInactivate(this);
             }
 
             state = AtomState.Obsolete;
+        }
+
+        public virtual void Invalidate()
+        {
+            if (Atom.CurrentScope != null)
+            {
+                Debug.LogError($"Invalidation of atom ({this}) in watched scope ({Atom.CurrentScope}) is dangerous");
+            }
+
+            state = AtomState.Obsolete;
+
+            ObsoleteSubscribers();
         }
 
         public void Actualize(bool force = false)
@@ -107,11 +94,11 @@ namespace UniMob.Core
                 return;
             }
 
-            Stack.Push(this);
+            var parent = Stack;
+            Stack = this;
 
-            if (!options.Has(AtomOptions.Active))
+            if (options.TrySet(AtomOptions.Active))
             {
-                options.Set(AtomOptions.Active);
                 AtomRegistry.OnActivate(this);
             }
 
@@ -142,12 +129,11 @@ namespace UniMob.Core
                 }
 
                 childrenCount = 0;
-                state = AtomState.Pulling;
 
                 Evaluate();
             }
 
-            Stack.Pop();
+            Stack = parent;
         }
 
         protected abstract void Evaluate();
@@ -256,7 +242,7 @@ namespace UniMob.Core
 
         protected void SubscribeToParent()
         {
-            var parent = Stack.Peek();
+            var parent = Stack;
             if (parent != null)
             {
                 AddSubscriber(parent);
@@ -266,41 +252,7 @@ namespace UniMob.Core
 
         public override string ToString()
         {
-            return _debugName ?? "[Anonymous]";
-        }
-
-        [NotNull] internal static readonly Stack<AtomBase> Stack = new Stack<AtomBase>();
-
-        static AtomBase()
-        {
-            Stack.Push(null);
-        }
-    }
-
-    internal static class AtomOptionExtensions
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Has(this AtomBase.AtomOptions keys, in AtomBase.AtomOptions flag)
-        {
-            return (keys & flag) != 0;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Set(this ref AtomBase.AtomOptions keys, in AtomBase.AtomOptions flag)
-        {
-            keys |= flag;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Reset(this ref AtomBase.AtomOptions keys, in AtomBase.AtomOptions flag)
-        {
-            keys &= ~flag;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryReset(this ref AtomBase.AtomOptions keys, in AtomBase.AtomOptions flag)
-        {
-            return keys != (keys &= ~flag);
+            return debugName ?? "[Anonymous]";
         }
     }
 }
