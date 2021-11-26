@@ -83,6 +83,21 @@ namespace UniMob.Tests
         }
 
         [Test]
+        public void Dispose()
+        {
+            Atom<int> atom;
+            using (var nested = Lifetime.CreateNested())
+            {
+                atom = Atom.Value(nested.Lifetime, 0, debugName: "DisposedAtom");
+            }
+
+            atom.Get();
+            LogAssert.Expect(LogType.Error, "Actualization of disposed atom (DisposedAtom) can lead to memory leak");
+
+            atom.Deactivate();
+        }
+
+        [Test]
         [TestCase("Value")]
         [TestCase("Computed")]
         public void AtomActivatedOnRead(string type)

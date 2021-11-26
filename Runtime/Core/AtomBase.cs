@@ -37,6 +37,8 @@ namespace UniMob.Core
         void IDisposable.Dispose()
         {
             Deactivate();
+            
+            options.Set(AtomOptions.Disposed);
         }
 
         public virtual void Deactivate()
@@ -87,6 +89,11 @@ namespace UniMob.Core
             if (state == AtomState.Pulling)
             {
                 throw new CyclicAtomDependencyException(this);
+            }
+
+            if (options.Has(AtomOptions.Disposed))
+            {
+                Debug.LogError($"Actualization of disposed atom ({this}) can lead to memory leak");
             }
 
             if (!force && state == AtomState.Actual)
