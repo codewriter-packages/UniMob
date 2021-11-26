@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using NUnit.Framework;
 
 namespace UniMob.Tests
@@ -132,6 +133,36 @@ namespace UniMob.Tests
         public void WhenDisposingEternalLifetime_ThenExceptionThrown()
         {
             Assert.Throws<InvalidOperationException>(() => LifetimeController.Eternal.Dispose());
+        }
+
+        [Test]
+        public void CreateCancellationToken()
+        {
+            CancellationToken token = _controller.Lifetime;
+
+            Assert.IsFalse(token.IsCancellationRequested);
+
+            _controller.Dispose();
+
+            Assert.IsTrue(token.IsCancellationRequested);
+        }
+
+        [Test]
+        public void CreateCancellationTokenFromDisposedLifetime()
+        {
+            _controller.Dispose();
+
+            CancellationToken token = _controller.Lifetime;
+
+            Assert.IsTrue(token.IsCancellationRequested);
+        }
+
+        [Test]
+        public void CancellationTokenOfTerminatedLifetimeIsCancelled()
+        {
+            CancellationToken token = Lifetime.Terminated;
+
+            Assert.IsTrue(token.IsCancellationRequested);
         }
     }
 }

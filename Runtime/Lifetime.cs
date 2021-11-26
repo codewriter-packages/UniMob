@@ -96,6 +96,11 @@ namespace UniMob
         {
             return !(a == b);
         }
+
+        public static implicit operator CancellationToken(Lifetime lifetime)
+        {
+            return lifetime.Controller.ToCancellationToken();
+        }
     }
 
     public interface ILifetimeController : IDisposable
@@ -105,6 +110,8 @@ namespace UniMob
 
         void Register(Action action);
         void Register(IDisposable disposable);
+
+        CancellationToken ToCancellationToken();
     }
 
     public class LifetimeController : ILifetimeController
@@ -115,8 +122,11 @@ namespace UniMob
         internal int registrationCount;
         internal object[] registrations;
 
+        internal CancellationTokenSource cancellationTokenSource;
+
         static LifetimeController()
         {
+            Terminated.ToCancellationToken();
             Terminated.Dispose();
         }
 
@@ -150,11 +160,6 @@ namespace UniMob
 
             IsDisposed = true;
 
-            if (registrationCount == 0)
-            {
-                return;
-            }
-
             for (var i = registrationCount - 1; i >= 0; i--)
             {
                 try
@@ -180,6 +185,19 @@ namespace UniMob
 
             registrationCount = 0;
             registrations = null;
+
+            cancellationTokenSource?.Cancel();
+
+            if (!ReferenceEquals(this, Terminated))
+            {
+                cancellationTokenSource?.Dispose();
+                cancellationTokenSource = null;
+            }
+        }
+
+        public CancellationToken ToCancellationToken()
+        {
+            return (cancellationTokenSource ?? CreateCtsLazily()).Token;
         }
 
         private void RegisterInternal(object obj)
@@ -233,6 +251,23 @@ namespace UniMob
             }
 
             registrations[registrationCount++] = obj;
+        }
+
+        private CancellationTokenSource CreateCtsLazily()
+        {
+            if (cancellationTokenSource != null)
+            {
+                return cancellationTokenSource;
+            }
+
+            cancellationTokenSource = new CancellationTokenSource();
+
+            if (IsDisposed)
+            {
+                cancellationTokenSource.Cancel();
+            }
+
+            return cancellationTokenSource;
         }
 
         public static Lifetime CreateLifetime([NotNull] LifetimeController controller)
