@@ -14,7 +14,12 @@ namespace UniMob
 
 #if UNITY_EDITOR
         [UnityEditor.Callbacks.DidReloadScripts]
+        private static void CheckOnScriptReload()
+        {
+            UnityEditor.EditorApplication.delayCall += Check;
+        }
 #endif
+
         [RuntimeInitializeOnLoadMethod]
         private static void Check()
         {
