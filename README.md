@@ -1,13 +1,17 @@
 # UniMob [![Github license](https://img.shields.io/github/license/codewriter-packages/UniMob.svg?style=flat-square)](#) [![Unity 2019.3](https://img.shields.io/badge/Unity-2019.3+-2296F3.svg?style=flat-square)](#) ![GitHub package.json version](https://img.shields.io/github/package-json/v/codewriter-packages/UniMob?style=flat-square)
-_Reactive state management for Unity_
+_Modern reactive programming library for Unity_
 
-## Introduction
+## Influences
 
-UniMob is a library that makes state management simple and scalable by transparently applying functional reactive programming. The philosophy behind UniMob is very simple:
+UniMob inspired by [MobX](https://github.com/mobxjs/mobx) and [$mol_atom](https://github.com/eigenmethod/mol/tree/master/atom) and adapts the principles of reactive programming for Unity.
 
-> _Anything that can be derived from the application state, should be derived. Automatically._
+## Motivation
 
-which includes the UI, data serialization, server communication, etc.
+Reactive programming is good for building application logic and user interface in particular. This approach is extremely popular on the web and currently spreading in native development ([Android](https://developer.android.com/jetpack/compose/state), [iOS](https://developer.apple.com/documentation/combine/observableobject)).
+
+However, there is only one implementation of reactive programming for Unity: [UniRx](https://github.com/neuecc/UniRx). UniRx is a great solution when calculations are distributed over time (such as delays and network requests). However, for modeling business logic and user interface, the ability to dynamically combine multiple reactive streams is much more important. And here Rx becomes too complicated. Select, Merge, Combine and other operators are extremely difficult for complex scenarios.
+
+UniMob takes a different approach to building reactive streams and aims to make combining reactive streams the same as writing regular code.
 
 ## A quick example
 
@@ -35,6 +39,14 @@ public class SampleCounter : LifetimeMonoBehaviour
     }
 }
 ```
+
+## Introduction
+
+UniMob is a library that makes state management simple and scalable by transparently applying functional reactive programming. The philosophy behind UniMob is very simple:
+
+> _Anything that can be derived from the application state, should be derived. Automatically._
+
+which includes the UI, data serialization, server communication, etc.
 
 ## Core concepts
 
@@ -94,6 +106,8 @@ public class TodoListApp : UniMobUIApp
 
     protected override Widget Build(BuildContext context)
     {
+        // Render scrollable list with todos,
+        // list will be automatically updated when todos changed
         return new ScrollList {
             Children = {
                 todoList.Todos.Select(todo => BuildTodo(todo))
@@ -119,6 +133,10 @@ Atom.Reaction(Lifetime, () => {
     Debug.Log("Tasks left: " + todoList.UnfinishedTodoCount);
 });
 ```
+
+### Lifetime
+
+UniMob handles atom lifecycle with Lifetime concept. Each atom is scoped to it's LIfetime (App Lifetime, View Lifetime, etc.). When Lifetime become disposed all scoped atoms automatically deactivates too. This allow to get rid of manual lifetime management complexity (such as Subscription pattern).
 
 ### What will UniMob react to?
 
@@ -155,7 +173,3 @@ Library distributed as git package ([How to install package from git URL](https:
 ## License
 
 UniMob is [MIT licensed](./LICENSE.md).
-
-## Credits
-
-UniMob inspired by [$mol_atom](https://github.com/eigenmethod/mol/tree/master/atom) and [MobX](https://github.com/mobxjs/mobx).
