@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using UnityEngine.Assertions;
 
 namespace UniMob.Core
 {
@@ -25,24 +24,17 @@ namespace UniMob.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Rent(ref T[] array, byte cap)
+        public static void Rent(out T[] array, int len)
         {
-            Assert.IsNull(array);
-
-            array = AllocateInternal(cap);
+            array = AllocateInternal(len);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Grow(ref T[] array, ref byte cap)
+        public static void Grow(ref T[] array)
         {
-            Assert.IsNotNull(array);
-            Assert.AreEqual(1 << cap, array.Length);
-
             var oldArray = array;
-            var oldCap = cap;
 
-            cap += 1;
-            array = AllocateInternal(cap);
+            array = AllocateInternal(oldArray.Length * 2);
 
             for (var i = 0; i < oldArray.Length; i++)
             {
@@ -50,38 +42,39 @@ namespace UniMob.Core
                 oldArray[i] = null;
             }
 
-            FreeInternal(oldArray, oldCap);
+            FreeInternal(oldArray);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Return(ref T[] array, byte cap)
+        public static void Return(ref T[] array)
         {
-            Assert.IsNotNull(array);
-            Assert.AreEqual(1 << cap, array.Length);
-
-#if UNITY_ASSERTIONS
-            foreach (var val in array)
-            {
-                Assert.IsNull(val);
-            }
-#endif
-
-            FreeInternal(array, cap);
+            FreeInternal(array);
 
             array = null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static T[] AllocateInternal(byte cap)
+        private static T[] AllocateInternal(int len)
         {
-            var stack = Pool[cap];
-            return stack.Count > 0 ? stack.Pop() : new T[1 << cap];
+            var stack = GetPool(len);
+            return stack.Count > 0 ? stack.Pop() : new T[len];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void FreeInternal(T[] array, byte cap)
+        private static void FreeInternal(T[] array)
         {
-            Pool[cap].Push(array);
+            GetPool(array.Length).Push(array);
+        }
+
+        private static Stack<T[]> GetPool(int len)
+        {
+            var i = 0;
+            while (i < Pool.Length && len != 1 << i)
+            {
+                i++;
+            }
+
+            return Pool[i];
         }
     }
 }

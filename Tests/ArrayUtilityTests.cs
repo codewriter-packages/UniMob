@@ -12,42 +12,37 @@ namespace UniMob.Tests
         }
 
         [Test]
-        [TestCase(0, ExpectedResult = 1)]
-        [TestCase(1, ExpectedResult = 2)]
-        [TestCase(3, ExpectedResult = 8)]
-        public int Rent(byte cap)
+        [TestCase(1, ExpectedResult = 1)]
+        [TestCase(2, ExpectedResult = 2)]
+        [TestCase(8, ExpectedResult = 8)]
+        public int Rent(int len)
         {
-            string[] array = null;
-            ArrayPool<string>.Rent(ref array, cap);
+            ArrayPool<string>.Rent(out var array, len);
             return array.Length;
         }
 
         [Test]
         public void Return()
         {
-            string[] array = null;
-            byte cap = 2;
-            ArrayPool<string>.Rent(ref array, cap);
-            ArrayPool<string>.Return(ref array, cap);
-            ArrayPool<string>.Rent(ref array, cap);
-            ArrayPool<string>.Return(ref array, cap);
+            ArrayPool<string>.Rent(out var array, 2);
+            ArrayPool<string>.Return(ref array);
+            ArrayPool<string>.Rent(out array, 2);
+            ArrayPool<string>.Return(ref array);
 
             Assert.IsNull(array);
-            Assert.AreEqual(1, ArrayPool<string>.Pool[cap].Count);
+            Assert.AreEqual(1, ArrayPool<string>.Pool[1].Count);
         }
 
         [Test]
         public void Grow()
         {
-            string[] array = null;
-            byte cap = 2;
-            ArrayPool<string>.Rent(ref array, cap);
+            ArrayPool<string>.Rent(out var array, 4);
             array[0] = "1";
             array[3] = "2";
 
             var oldArray = array;
 
-            ArrayPool<string>.Grow(ref array, ref cap);
+            ArrayPool<string>.Grow(ref array);
 
             Assert.IsNotNull(array);
             Assert.AreEqual(8, array.Length);
@@ -56,8 +51,7 @@ namespace UniMob.Tests
             Assert.AreEqual(null, array[2]);
             Assert.AreEqual("2", array[3]);
 
-            string[] newArray = null;
-            ArrayPool<string>.Rent(ref newArray, 2);
+            ArrayPool<string>.Rent(out var newArray, 4);
             Assert.AreEqual(oldArray, newArray);
             Assert.AreEqual(null, newArray[0]);
             Assert.AreEqual(null, newArray[1]);

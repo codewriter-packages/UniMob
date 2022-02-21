@@ -10,11 +10,9 @@ namespace UniMob.Core
 
         internal readonly string debugName;
 
-        internal byte childrenCap;
         internal int childrenCount;
         internal AtomBase[] children;
 
-        internal byte subscribersCap;
         internal int subscribersCount;
         internal AtomBase[] subscribers;
 
@@ -52,8 +50,7 @@ namespace UniMob.Core
                 }
 
                 childrenCount = 0;
-                ArrayPool<AtomBase>.Return(ref children, childrenCap);
-                childrenCap = 0;
+                ArrayPool<AtomBase>.Return(ref children);
             }
 
             if (subscribers != null)
@@ -197,11 +194,11 @@ namespace UniMob.Core
         {
             if (subscribers == null)
             {
-                ArrayPool<AtomBase>.Rent(ref subscribers, subscribersCap);
+                ArrayPool<AtomBase>.Rent(out subscribers, 2);
             }
             else if (subscribers.Length == subscribersCount)
             {
-                ArrayPool<AtomBase>.Grow(ref subscribers, ref subscribersCap);
+                ArrayPool<AtomBase>.Grow(ref subscribers);
             }
 
             subscribers[subscribersCount] = subscriber;
@@ -227,8 +224,7 @@ namespace UniMob.Core
 
             if (subscribersCount == 0)
             {
-                ArrayPool<AtomBase>.Return(ref subscribers, subscribersCap);
-                subscribersCap = 0;
+                ArrayPool<AtomBase>.Return(ref subscribers);
             }
         }
 
@@ -236,11 +232,11 @@ namespace UniMob.Core
         {
             if (children == null)
             {
-                ArrayPool<AtomBase>.Rent(ref children, childrenCap);
+                ArrayPool<AtomBase>.Rent(out children, 2);
             }
             else if (children.Length == childrenCount)
             {
-                ArrayPool<AtomBase>.Grow(ref children, ref childrenCap);
+                ArrayPool<AtomBase>.Grow(ref children);
             }
 
             children[childrenCount] = child;
