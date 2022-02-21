@@ -607,5 +607,19 @@ namespace UniMob.Tests
             Assert.AreEqual(1, source);
             Assert.AreEqual(1, medium.Value);
         }
+
+        [Test]
+        public void SubscriptionOnDisposedAtomDoesNotLeadToActualization()
+        {
+            using (var lc = Lifetime.CreateNested())
+            {
+                var source = Atom.Value(lc.Lifetime, 0);
+                Atom.Reaction(Lifetime, () => !lc.IsDisposed ? source.Value : 0, v => { });
+
+                AtomScheduler.Sync();
+            }
+
+            AtomScheduler.Sync();
+        }
     }
 }

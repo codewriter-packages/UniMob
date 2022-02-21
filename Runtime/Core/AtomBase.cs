@@ -60,7 +60,7 @@ namespace UniMob.Core
             {
                 for (var i = 0; i < subscribersCount; i++)
                 {
-                    subscribers[i].Check();
+                    subscribers[i].Obsolete();
                 }
             }
 
