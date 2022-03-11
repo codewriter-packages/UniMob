@@ -17,12 +17,6 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "nuget.mono-cecil",
-            "expression": "0.0.0-preview",
-            "define": "MONO_CECIL"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }
