@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -6,6 +7,8 @@ namespace UniMob.Core
 {
     public class AtomScheduler : MonoBehaviour
     {
+        public static Stopwatch SyncTimer = new Stopwatch();
+    
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private static readonly CustomSampler ProfilerSampler = CustomSampler.Create("UniMob.Sync");
 #endif
@@ -45,6 +48,8 @@ namespace UniMob.Core
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilerSampler.Begin();
 #endif
+            SyncTimer.Restart();
+            
             var toSwap = _updatingCurrentFrame;
             _updatingCurrentFrame = _updatingNextFrame;
             _updatingNextFrame = toSwap;
@@ -58,6 +63,8 @@ namespace UniMob.Core
                     atom.Actualize();
                 }
             }
+
+            SyncTimer.Stop();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilerSampler.End();
