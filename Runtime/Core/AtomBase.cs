@@ -6,6 +6,8 @@ namespace UniMob.Core
 {
     public abstract class AtomBase : IEquatable<AtomBase>, IDisposable
     {
+        public static int TrackedAtomsCount = 0;
+        
         [CanBeNull] internal static AtomBase Stack;
 
         internal readonly string debugName;
@@ -194,6 +196,7 @@ namespace UniMob.Core
         {
             if (subscribers == null)
             {
+                ++TrackedAtomsCount;
                 ArrayPool<AtomBase>.Rent(out subscribers, 2);
             }
             else if (subscribers.Length == subscribersCount)
@@ -224,6 +227,7 @@ namespace UniMob.Core
 
             if (subscribersCount == 0)
             {
+                --TrackedAtomsCount;
                 ArrayPool<AtomBase>.Return(ref subscribers);
             }
         }
