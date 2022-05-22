@@ -5,6 +5,13 @@
   "version": "2.1.2",
   "unity": "2019.3",
   "license": "MIT",
+  "keywords": [
+    "unity"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codewriter-packages/UniMob.git"
+  },
   "author": "CodeWriter (https://github.com/orgs/codewriter-packages)",
   "homepage": "https://github.com/codewriter-packages/UniMob#readme",
   "dependencies": {
