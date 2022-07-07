@@ -11,12 +11,11 @@ namespace UniMob.Core
         internal readonly Action<T> push;
 
         internal MutableComputedAtom(
-            Lifetime lifetime,
             string debugName,
             [NotNull] Func<T> pull,
             [NotNull] Action<T> push,
             bool keepAlive = false)
-            : base(lifetime, debugName, pull, keepAlive)
+            : base(debugName, pull, keepAlive)
         {
             this.push = push ?? throw new ArgumentNullException(nameof(push));
         }

@@ -31,7 +31,8 @@ namespace UniMob
             Action<Exception> exceptionHandler = null,
             string debugName = null)
         {
-            var atom = new ReactionAtom(lifetime, debugName, reaction, exceptionHandler);
+            var atom = new ReactionAtom(debugName, reaction, exceptionHandler);
+            lifetime.Register(atom);
             atom.Activate();
             return atom;
         }

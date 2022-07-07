@@ -17,7 +17,8 @@ namespace UniMob.Editor.Weaver
         private const string ConstructorName = ".ctor";
         private const string DirectEvaluateMethodName = nameof(ComputedAtom<int>.DirectEvaluate);
         private const string CompAndInvalidateMethodName = nameof(ComputedAtom<int>.CompareAndInvalidate);
-        private const string CreateAtomMethodName = nameof(CodeGenAtom.Create);
+        private const string CreateAtomMethodName = nameof(CodeGenAtom.CreatePooled);
+        private const string ThrowIfDisposedMethodName = nameof(LifetimeScopeExtension.ThrowIfDisposed);
         private const string KeepAliveParameterName = nameof(AtomAttribute.KeepAlive);
 
         private List<DiagnosticMessage> _diagnosticMessages = new List<DiagnosticMessage>();
@@ -31,6 +32,7 @@ namespace UniMob.Editor.Weaver
         private MethodReference _atomGetValueMethod;
         private MethodReference _atomDirectEvalMethod;
         private MethodReference _atomCompAndInvalidateMethod;
+        private MethodReference _throwIfDisposedMethod;
 
         private MethodReference _atomPullCtorMethod;
 
@@ -69,6 +71,7 @@ namespace UniMob.Editor.Weaver
             var atomTypeDef = _atomType.Resolve();
             var atomPullDef = _module.ImportReference(typeof(Func<>)).Resolve();
             var atomFactoryDef = _module.ImportReference(typeof(CodeGenAtom)).Resolve();
+            var lifetimeScopeExtensionsDef = _module.ImportReference(typeof(LifetimeScopeExtension)).Resolve();
 
             _atomGetValueMethod = _module.ImportReference(atomTypeDef.FindProperty(ValuePropertyName).GetMethod);
 
@@ -78,6 +81,8 @@ namespace UniMob.Editor.Weaver
                 _module.ImportReference(atomTypeDef.FindMethod(CompAndInvalidateMethodName, 1));
 
             _atomPullCtorMethod = _module.ImportReference(atomPullDef.FindMethod(ConstructorName, 2));
+            _throwIfDisposedMethod =
+                _module.ImportReference(lifetimeScopeExtensionsDef.FindMethod(ThrowIfDisposedMethodName, 1));
         }
 
         public bool Weave(PropertyDefinition property)
@@ -123,12 +128,12 @@ namespace UniMob.Editor.Weaver
                 _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnAbstractProperty(property));
                 return false;
             }
-            
+
             var atomOptions = new AtomOptions
             {
                 KeepAlive = atomAttribute.GetArgumentValueOrDefault(KeepAliveParameterName, false),
             };
-            
+
             property.CustomAttributes.Remove(atomAttribute);
 
             FixAutoPropertyBackingField(property);
@@ -167,7 +172,7 @@ namespace UniMob.Editor.Weaver
             var atomFieldType = Helpers.MakeGenericType(_atomType, property.PropertyType);
             return new FieldDefinition(name, FieldAttributes.Private, atomFieldType);
         }
-        
+
         private struct AtomOptions
         {
             public bool KeepAlive;
@@ -190,6 +195,7 @@ namespace UniMob.Editor.Weaver
             private MethodReference _atomPullCtorMethod;
             private MethodReference _tryEnterMethod;
             private MethodReference _atomGetMethod;
+            private MethodReference _throwIfDisposedMethod;
 
             public AtomGetterMethodWeaver(AtomWeaverV2 weaver, PropertyDefinition property, FieldReference atomField,
                 AtomOptions options)
@@ -212,6 +218,7 @@ namespace UniMob.Editor.Weaver
                 _atomPullCtorMethod = Helpers.MakeHostInstanceGeneric(weaver._atomPullCtorMethod, propertyType);
                 _tryEnterMethod = Helpers.MakeHostInstanceGeneric(weaver._atomDirectEvalMethod, propertyType);
                 _atomGetMethod = Helpers.MakeHostInstanceGeneric(weaver._atomGetValueMethod, propertyType);
+                _throwIfDisposedMethod = weaver._throwIfDisposedMethod;
 
                 var body = property.GetMethod.Body;
                 body.InitLocals = true;
@@ -247,6 +254,10 @@ namespace UniMob.Editor.Weaver
 
             private void Prepend(ref int ind, IList<Instruction> il)
             {
+                // LifetimeScopeExtension.ThrowIfDisposed(this);
+                il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0));
+                il.Insert(ind++, Instruction.Create(OpCodes.Call, _throwIfDisposedMethod));
+
                 // if (atom != null) goto nullCheckEnd;
                 il.Insert(ind++, Instruction.Create(OpCodes.Nop));
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0));
@@ -308,6 +319,7 @@ namespace UniMob.Editor.Weaver
             private Instruction _preReturnInstruction;
 
             private MethodReference _compAndInvalidateMethod;
+            private MethodReference _throwIfDisposedMethod;
 
             public AtomSetterMethodWeaver(AtomWeaverV2 weaver, PropertyDefinition property, FieldReference atomField)
             {
@@ -320,6 +332,7 @@ namespace UniMob.Editor.Weaver
                 var propertyType = property.PropertyType;
                 _compAndInvalidateMethod =
                     Helpers.MakeHostInstanceGeneric(weaver._atomCompAndInvalidateMethod, propertyType);
+                _throwIfDisposedMethod = weaver._throwIfDisposedMethod;
             }
 
             public void Weave()
@@ -336,6 +349,10 @@ namespace UniMob.Editor.Weaver
 
             private void Prepend(ref int ind, IList<Instruction> il)
             {
+                // LifetimeScopeExtension.ThrowIfDisposed(this);
+                il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0));
+                il.Insert(ind++, Instruction.Create(OpCodes.Call, _throwIfDisposedMethod));
+
                 // if (atom == null) goto nullCheckEnd;
                 il.Insert(ind++, Instruction.Create(OpCodes.Nop));
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0));

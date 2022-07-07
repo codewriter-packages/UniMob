@@ -12,14 +12,14 @@ namespace UniMob.Core
         internal readonly Action<Exception> exceptionHandler;
 
         public ReactionAtom(
-            Lifetime lifetime,
             string debugName,
             Action reaction,
             Action<Exception> exceptionHandler = null)
-            : base(lifetime, debugName, AtomOptions.AutoActualize)
         {
+            this.debugName = debugName;
             this.reaction = reaction ?? throw new ArgumentNullException(nameof(reaction));
             this.exceptionHandler = exceptionHandler ?? Debug.LogException;
+            options = AtomOptions.AutoActualize;
         }
 
         public void Activate(bool force = false)

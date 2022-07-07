@@ -11,10 +11,11 @@ namespace UniMob.Core
 
         internal T value;
 
-        internal ValueAtom(Lifetime lifetime, string debugName, T value)
-            : base(lifetime, debugName, AtomOptions.None)
+        internal ValueAtom(string debugName, T value)
         {
+            this.debugName = debugName;
             this.value = value;
+            options = AtomOptions.None;
             comparer = EqualityComparer<T>.Default;
         }
 

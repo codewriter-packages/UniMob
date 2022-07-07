@@ -11,21 +11,33 @@ namespace UniMob.Core
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     public class ComputedAtom<T> : AtomBase, Atom<T>
     {
-        internal readonly Func<T> pull;
-        internal readonly IEqualityComparer<T> comparer;
+        internal Func<T> pull;
+        internal IEqualityComparer<T> comparer;
 
         internal T cache;
         internal ExceptionDispatchInfo exception;
 
         internal ComputedAtom(
-            Lifetime lifetime,
             string debugName,
             [NotNull] Func<T> pull,
             bool keepAlive = false)
-            : base(lifetime, debugName, keepAlive ? AtomOptions.AutoActualize : AtomOptions.None)
         {
+            this.debugName = debugName;
             this.pull = pull ?? throw new ArgumentNullException(nameof(pull));
+            options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
             comparer = EqualityComparer<T>.Default;
+        }
+
+        internal void Setup(string debugName, Func<T> pull, bool keepAlive = false)
+        {
+            if (!options.Has(AtomOptions.Disposed))
+            {
+                throw new InvalidOperationException("Cannot reuse non disposed atom");
+            }
+            
+            this.debugName = debugName;
+            this.pull = pull ?? throw new ArgumentNullException(nameof(pull));
+            options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
         }
 
         // for CodeGen
