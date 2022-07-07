@@ -10,7 +10,7 @@ namespace UniMob.Core
         
         [CanBeNull] internal static AtomBase Stack;
 
-        internal readonly string debugName;
+        internal string debugName;
 
         internal int childrenCount;
         internal AtomBase[] children;
@@ -20,14 +20,6 @@ namespace UniMob.Core
 
         internal AtomOptions options;
         internal AtomState state = AtomState.Obsolete;
-
-        internal AtomBase(Lifetime lifetime, string debugName, AtomOptions options)
-        {
-            this.debugName = debugName;
-            this.options = options;
-
-            lifetime.Register(this);
-        }
 
         public bool Equals(AtomBase other)
         {

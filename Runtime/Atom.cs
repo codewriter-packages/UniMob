@@ -26,7 +26,9 @@ namespace UniMob
         /// </example>
         public static MutableAtom<T> Value<T>(Lifetime lifetime, T value, string debugName = null)
         {
-            return new ValueAtom<T>(lifetime, debugName, value);
+            var atom = new ValueAtom<T>(debugName, value);
+            lifetime.Register(atom);
+            return atom;
         }
 
         /// <summary>
@@ -81,7 +83,9 @@ namespace UniMob
         public static Atom<T> Computed<T>(Lifetime lifetime, Func<T> pull,
             bool keepAlive = false, string debugName = null)
         {
-            return new ComputedAtom<T>(lifetime, debugName, pull, keepAlive);
+            var atom = new ComputedAtom<T>(debugName, pull, keepAlive);
+            lifetime.Register(atom);
+            return atom;
         }
 
         /// <summary>
@@ -117,7 +121,9 @@ namespace UniMob
         public static MutableAtom<T> Computed<T>(Lifetime lifetime, Func<T> pull, Action<T> push,
             bool keepAlive = false, string debugName = null)
         {
-            return new MutableComputedAtom<T>(lifetime, debugName, pull, push, keepAlive);
+            var atom = new MutableComputedAtom<T>(debugName, pull, push, keepAlive);
+            lifetime.Register(atom);
+            return atom;
         }
     }
 }

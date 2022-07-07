@@ -280,4 +280,15 @@ namespace UniMob
     {
         Lifetime Lifetime { get; }
     }
+
+    public static class LifetimeScopeExtension
+    {
+        public static void ThrowIfDisposed(ILifetimeScope scope)
+        {
+            if (scope.Lifetime.IsDisposed)
+            {
+                throw new ObjectDisposedException("Lifetime is disposed");
+            }
+        }
+    }
 }
