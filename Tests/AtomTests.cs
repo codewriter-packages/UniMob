@@ -430,7 +430,7 @@ namespace UniMob.Tests
             AtomScheduler.Sync();
             Assert.AreEqual("BB", watch);
         }
-        
+
         [Test]
         public void ReactionWithExceptionUpdatesOnce()
         {
@@ -620,6 +620,51 @@ namespace UniMob.Tests
             }
 
             AtomScheduler.Sync();
+        }
+
+        [Test]
+        public void SuspendOnInvalidationWithoutKeepAlive()
+        {
+            var num = 0;
+            var atom = Atom.Computed(Lifetime, () => num += 1, keepAlive: false);
+            atom.Get();
+
+            Assert.AreEqual(1, num);
+
+            atom.Invalidate();
+            AtomScheduler.Sync();
+
+            Assert.AreEqual(1, num);
+        }
+
+        [Test]
+        public void ActualizeOnInvalidationWithKeepAlive()
+        {
+            var num = 0;
+            var atom = Atom.Computed(Lifetime, () => num += 1, keepAlive: true);
+            atom.Get();
+
+            Assert.AreEqual(1, num);
+
+            atom.Invalidate();
+            AtomScheduler.Sync();
+
+            Assert.AreEqual(2, num);
+        }
+
+        [Test]
+        public void SuspendOnDeactivationWithKeepAlive()
+        {
+            var num = 0;
+            var atom = Atom.Computed(Lifetime, () => num += 1, keepAlive: true);
+            atom.Get();
+
+            Assert.AreEqual(1, num);
+
+            atom.Deactivate();
+            AtomScheduler.Sync();
+
+            Assert.AreEqual(1, num);
         }
     }
 }

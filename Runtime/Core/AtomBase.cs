@@ -146,14 +146,16 @@ namespace UniMob.Core
 
         protected void ObsoleteSubscribers()
         {
-            if (subscribers == null)
+            if (subscribers != null)
             {
-                return;
+                for (var i = 0; i < subscribersCount; i++)
+                {
+                    subscribers[i].Obsolete();
+                }
             }
-
-            for (var i = 0; i < subscribersCount; i++)
+            else if (options.Has(AtomOptions.AutoActualize))
             {
-                subscribers[i].Obsolete();
+                AtomScheduler.Actualize(this);
             }
         }
 
