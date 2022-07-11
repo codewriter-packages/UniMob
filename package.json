@@ -2,7 +2,7 @@
   "name": "com.codewriter.unimob",
   "displayName": "UniMob",
   "description": "Reactive state management for Unity",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "unity": "2019.3",
   "license": "MIT",
   "keywords": [

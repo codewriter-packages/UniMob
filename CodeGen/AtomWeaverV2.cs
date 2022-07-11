@@ -88,6 +88,12 @@ namespace UniMob.Editor.Weaver
                 return false;
             }
 
+            if (property.DeclaringType.HasGenericParameters)
+            {
+                _diagnosticMessages.Add(UserError.AtomAttributeCannotBeUsedOnGenericClasses(property));
+                return false;
+            }
+
             if (!property.DeclaringType.IsClass || property.DeclaringType.IsValueType)
             {
                 _diagnosticMessages.Add(UserError.AtomAttributeCanBeUsedOnlyOnClassMembers(property));
