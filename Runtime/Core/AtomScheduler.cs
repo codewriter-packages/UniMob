@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace UniMob.Core
 {
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     public class AtomScheduler : MonoBehaviour
     {
         public static Stopwatch SyncTimer = new Stopwatch();

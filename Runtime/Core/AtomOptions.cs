@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using Unity.IL2CPP.CompilerServices;
 
 namespace UniMob.Core
 {
@@ -15,6 +16,8 @@ namespace UniMob.Core
         NextDirectEvaluate = 1 << 7,
     }
 
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     internal static class AtomOptionExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
