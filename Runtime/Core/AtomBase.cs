@@ -1,13 +1,16 @@
 using System;
 using JetBrains.Annotations;
+using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 
 namespace UniMob.Core
 {
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     public abstract class AtomBase : IEquatable<AtomBase>, IDisposable
     {
         public static int TrackedAtomsCount = 0;
-        
+
         [CanBeNull] internal static AtomBase Stack;
 
         internal readonly string debugName;

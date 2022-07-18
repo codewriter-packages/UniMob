@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using JetBrains.Annotations;
+using Unity.IL2CPP.CompilerServices;
 
 namespace UniMob.Core
 {
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     public class ComputedAtom<T> : AtomBase, Atom<T>
     {
         internal readonly Func<T> pull;

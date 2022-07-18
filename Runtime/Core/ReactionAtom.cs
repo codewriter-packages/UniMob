@@ -1,8 +1,11 @@
 using System;
+using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 
 namespace UniMob.Core
 {
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     public class ReactionAtom : AtomBase, Reaction
     {
         internal readonly Action reaction;
