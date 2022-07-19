@@ -59,7 +59,7 @@ namespace UniMob.Editor.Weaver
         private void Prepare(AssemblyDefinition assembly)
         {
             _generateDebugNames = Helpers.GetCustomAttribute<AtomGenerateDebugNamesAttribute>(assembly) != null;
-#if UNITY_EDITOR || UNIMOB_ATOM_GENERATE_DEBUG_NAMES
+#if UNIMOB_ATOM_GENERATE_DEBUG_NAMES
             _generateDebugNames = true;
 #endif
 
