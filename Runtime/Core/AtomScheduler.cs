@@ -10,8 +10,8 @@ namespace UniMob.Core
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     public class AtomScheduler : MonoBehaviour
     {
-        public static Stopwatch SyncTimer = new Stopwatch();
-    
+        public static readonly Stopwatch SyncTimer = new Stopwatch();
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private static readonly CustomSampler ProfilerSampler = CustomSampler.Create("UniMob.Sync");
 #endif
@@ -33,6 +33,13 @@ namespace UniMob.Core
             Sync();
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void Initialize()
+        {
+            _current = null;
+            _dirty = false;
+        }
+
         internal static void Actualize(AtomBase atom)
         {
             _dirty = true;
@@ -52,7 +59,7 @@ namespace UniMob.Core
             ProfilerSampler.Begin();
 #endif
             SyncTimer.Restart();
-            
+
             var toSwap = _updatingCurrentFrame;
             _updatingCurrentFrame = _updatingNextFrame;
             _updatingNextFrame = toSwap;

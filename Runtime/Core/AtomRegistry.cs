@@ -31,6 +31,12 @@ namespace UniMob.Core
                 {
                     atom.Deactivate();
                 }
+
+                if (AtomBase.TrackedAtomsCount != 0)
+                {
+                    UnityEngine.Debug.LogError(
+                        "Atoms were incorrectly deactivated on exiting play mode. Please open issue on github");
+                }
             }
         }
 #endif
