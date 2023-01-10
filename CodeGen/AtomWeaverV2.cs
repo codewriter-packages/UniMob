@@ -271,7 +271,17 @@ namespace UniMob.Editor.Weaver
                     ? Instruction.Create(OpCodes.Ldstr, _atomDebugName)
                     : Instruction.Create(OpCodes.Ldnull)); // debugName
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0)); // getter_method
-                il.Insert(ind++, Instruction.Create(OpCodes.Ldftn, _property.GetMethod));
+
+                if (_property.GetMethod.IsVirtual)
+                {
+                    il.Insert(ind++, Instruction.Create(OpCodes.Dup));
+                    il.Insert(ind++, Instruction.Create(OpCodes.Ldvirtftn, _property.GetMethod));
+                }
+                else
+                {
+                    il.Insert(ind++, Instruction.Create(OpCodes.Ldftn, _property.GetMethod));
+                }
+
                 il.Insert(ind++, Instruction.Create(OpCodes.Newobj, _atomPullCtorMethod));
                 il.Insert(ind++, Instruction.Create(_options.KeepAlive ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0));
                 il.Insert(ind++, Instruction.Create(OpCodes.Call, _atomCreateMethod)); // create atom
