@@ -185,11 +185,9 @@ namespace UniMob.Editor.Weaver
             private PropertyDefinition _property;
 
             private string _atomDebugName;
-            private VariableDefinition _resultVariable;
 
             private Instruction _nullCheckEndInstruction;
             private Instruction _directEvalEndInstruction;
-            private Instruction _loadResultInstruction;
 
             private MethodReference _atomCreateMethod;
             private MethodReference _atomPullCtorMethod;
@@ -207,11 +205,9 @@ namespace UniMob.Editor.Weaver
                 _atomDebugName = weaver._generateDebugNames
                     ? $"{property.DeclaringType.FullName}::{property.Name}"
                     : null;
-                _resultVariable = new VariableDefinition(property.PropertyType);
 
                 _nullCheckEndInstruction = Instruction.Create(OpCodes.Nop);
                 _directEvalEndInstruction = Instruction.Create(OpCodes.Nop);
-                _loadResultInstruction = Instruction.Create(OpCodes.Ldloc, _resultVariable);
 
                 var propertyType = property.PropertyType;
                 _atomCreateMethod = Helpers.MakeGenericMethod(weaver._atomCreateMethod, propertyType);
@@ -219,10 +215,6 @@ namespace UniMob.Editor.Weaver
                 _tryEnterMethod = Helpers.MakeHostInstanceGeneric(weaver._atomDirectEvalMethod, propertyType);
                 _atomGetMethod = Helpers.MakeHostInstanceGeneric(weaver._atomGetValueMethod, propertyType);
                 _throwIfDisposedMethod = weaver._throwIfDisposedMethod;
-
-                var body = property.GetMethod.Body;
-                body.InitLocals = true;
-                body.Variables.Add(_resultVariable);
             }
 
             public void Weave()
@@ -232,22 +224,6 @@ namespace UniMob.Editor.Weaver
                 var index = 0;
 
                 Prepend(ref index, instructions);
-
-                while (index < instructions.Count)
-                {
-                    var current = instructions[index++];
-                    if (current.OpCode != OpCodes.Ret)
-                    {
-                        continue;
-                    }
-
-                    current.OpCode = OpCodes.Nop;
-                    current.Operand = null;
-
-                    ReplaceReturn(ref index, instructions);
-                }
-
-                Append(ref index, instructions);
 
                 body.OptimizeMacros();
             }
@@ -300,23 +276,9 @@ namespace UniMob.Editor.Weaver
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0));
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldfld, _atomField));
                 il.Insert(ind++, Instruction.Create(OpCodes.Callvirt, _atomGetMethod));
-                il.Insert(ind++, Instruction.Create(OpCodes.Stloc, _resultVariable));
-                il.Insert(ind++, Instruction.Create(OpCodes.Br, _loadResultInstruction));
+                il.Insert(ind++, Instruction.Create(OpCodes.Ret));
 
                 il.Insert(ind++, _directEvalEndInstruction);
-            }
-
-            private void ReplaceReturn(ref int ind, IList<Instruction> il)
-            {
-                il.Insert(ind++, Instruction.Create(OpCodes.Nop));
-                il.Insert(ind++, Instruction.Create(OpCodes.Stloc, _resultVariable));
-                il.Insert(ind++, Instruction.Create(OpCodes.Br, _loadResultInstruction));
-            }
-
-            private void Append(ref int index, IList<Instruction> il)
-            {
-                il.Insert(index++, _loadResultInstruction);
-                il.Insert(index++, Instruction.Create(OpCodes.Ret));
             }
         }
 
