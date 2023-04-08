@@ -2,12 +2,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using UniMob.Core;
-using Unity.CompilationPipeline.Common.Diagnostics;
 
 namespace UniMob.Editor.Weaver
 {
@@ -20,8 +18,6 @@ namespace UniMob.Editor.Weaver
         private const string CreateAtomMethodName = nameof(CodeGenAtom.CreatePooled);
         private const string ThrowIfDisposedMethodName = nameof(LifetimeScopeExtension.ThrowIfDisposed);
         private const string KeepAliveParameterName = nameof(AtomAttribute.KeepAlive);
-
-        private List<DiagnosticMessage> _diagnosticMessages = new List<DiagnosticMessage>();
 
         private ModuleDefinition _module;
 
@@ -38,22 +34,34 @@ namespace UniMob.Editor.Weaver
 
         private bool _generateDebugNames;
 
-        public List<DiagnosticMessage> Weave(AssemblyDefinition assembly, out bool didAnyChange)
+        public bool Weave(AssemblyDefinition assembly)
         {
-            Prepare(assembly);
+            _module = assembly.MainModule;
+            _lifetimeScopeInterfaceType = _module.ImportReference(typeof(ILifetimeScope));
 
-            var allProperties = _module
-                .GetAllTypes()
-                .SelectMany(type => type.Properties);
+            var didAnyChange = false;
+            var prepared = false;
 
-            didAnyChange = false;
-
-            foreach (var property in allProperties)
+            foreach (var type in _module.GetAllTypes())
             {
-                didAnyChange |= Weave(property);
+                if (!ShouldWeaveType(type))
+                {
+                    continue;
+                }
+
+                if (!prepared)
+                {
+                    prepared = true;
+                    Prepare(assembly);
+                }
+
+                foreach (var property in type.Properties)
+                {
+                    didAnyChange |= Weave(property);
+                }
             }
 
-            return _diagnosticMessages;
+            return didAnyChange;
         }
 
         private void Prepare(AssemblyDefinition assembly)
@@ -62,11 +70,8 @@ namespace UniMob.Editor.Weaver
 #if UNIMOB_ATOM_GENERATE_DEBUG_NAMES
             _generateDebugNames = true;
 #endif
-
-            _module = assembly.MainModule;
-
+            
             _atomType = _module.ImportReference(typeof(ComputedAtom<>));
-            _lifetimeScopeInterfaceType = _module.ImportReference(typeof(ILifetimeScope));
 
             var atomTypeDef = _atomType.Resolve();
             var atomPullDef = _module.ImportReference(typeof(Func<>)).Resolve();
@@ -85,6 +90,26 @@ namespace UniMob.Editor.Weaver
                 _module.ImportReference(lifetimeScopeExtensionsDef.FindMethod(ThrowIfDisposedMethodName, 1));
         }
 
+        private bool ShouldWeaveType(TypeDefinition type)
+        {
+            if (!type.IsClass)
+            {
+                return false;
+            }
+
+            if (type.HasGenericParameters)
+            {
+                return false;
+            }
+
+            if (!type.IsInterfaceImplemented(_lifetimeScopeInterfaceType))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public bool Weave(PropertyDefinition property)
         {
             var atomAttribute = Helpers.GetCustomAttribute<AtomAttribute>(property);
@@ -93,39 +118,18 @@ namespace UniMob.Editor.Weaver
                 return false;
             }
 
-            if (property.DeclaringType.HasGenericParameters)
-            {
-                _diagnosticMessages.Add(UserError.AtomAttributeCannotBeUsedOnGenericClasses(property));
-                return false;
-            }
-
-            if (!property.DeclaringType.IsClass || property.DeclaringType.IsValueType)
-            {
-                _diagnosticMessages.Add(UserError.AtomAttributeCanBeUsedOnlyOnClassMembers(property));
-                return false;
-            }
-
-            if (!property.DeclaringType.IsInterfaceImplemented(_lifetimeScopeInterfaceType))
-            {
-                _diagnosticMessages.Add(UserError.AtomAttributeCanBeUsedOnlyOnLifetimeScope(property));
-                return false;
-            }
-
             if (property.GetMethod == null)
             {
-                _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnSetOnlyProperty(property));
                 return false;
             }
 
             if (property.GetMethod.IsStatic)
             {
-                _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnStaticProperty(property));
                 return false;
             }
 
             if (property.GetMethod.IsAbstract)
             {
-                _diagnosticMessages.Add(UserError.CannotUseAtomAttributeOnAbstractProperty(property));
                 return false;
             }
 
