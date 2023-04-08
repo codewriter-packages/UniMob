@@ -12,6 +12,14 @@ namespace UniMob
         /// Should an atom keep its value actualized when there are no subscribers?
         /// </summary>
         public bool KeepAlive { get; set; }
+    }   
+    
+    /// <summary>
+    /// Tells the compiler that a class should be included to code generation.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class AtomContainerAttribute : Attribute
+    {
     }
 
     [AttributeUsage(AttributeTargets.Assembly)]

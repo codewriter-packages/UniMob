@@ -58,6 +58,7 @@ namespace UniMob.Tests
             }
         }
 
+        [AtomContainer]
         private class TestClass : ILifetimeScope
         {
             public TestClass(Lifetime lifetime)

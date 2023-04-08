@@ -102,6 +102,11 @@ namespace UniMob.Editor.Weaver
                 return false;
             }
 
+            if (Helpers.GetCustomAttribute<AtomContainerAttribute>(type) == null)
+            {
+                return false;
+            }
+
             if (!type.IsInterfaceImplemented(_lifetimeScopeInterfaceType))
             {
                 return false;
