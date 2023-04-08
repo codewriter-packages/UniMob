@@ -29,15 +29,6 @@ namespace UniMob.Analyzers
             isEnabledByDefault: true
         );
 
-        private static readonly DiagnosticDescriptor AtomAttributeCanBeUsedOnlyOnLifetimeScope = new(
-            id: "UniMob_012",
-            title: "Atom attribute can be used only on class that implements ILifetimeScope interface",
-            messageFormat: "Atom attribute can be used only on class that implements ILifetimeScope interface",
-            category: "Usage",
-            defaultSeverity: DiagnosticSeverity.Error,
-            isEnabledByDefault: true
-        );
-
         private static readonly DiagnosticDescriptor AtomAttributeCannotBeUsedOnGenericClasses = new(
             id: "UniMob_013",
             title: "Atom attribute cannot be used on generic classes",
@@ -86,7 +77,6 @@ namespace UniMob.Analyzers
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
             AtomAttributeCanBeUsedOnlyOnClassMembers,
             AtomAttributeCannotBeUsedOnGenericClasses,
-            AtomAttributeCanBeUsedOnlyOnLifetimeScope,
             AtomAttributeCanBeUsedOnlyOnAtomContainerClasses,
             CannotUseAtomAttributeOnSetOnlyProperty,
             CannotUseAtomAttributeOnStaticProperty,
@@ -117,17 +107,10 @@ namespace UniMob.Analyzers
                 return;
             }
 
-            if (context.Compilation.GetTypeByMetadataName("UniMob.ILifetimeScope")
-                is not { } lifetimeScopeSymbol)
-            {
-                return;
-            }
-
             var cache = new Cache
             {
                 AtomAttributeTypeSymbol = atomAttributeSymbol,
                 AtomContainerAttributeTypeSymbol = atomContainerAttributeSymbol,
-                LifetimeScopeTypeSymbol = lifetimeScopeSymbol,
             };
 
             context.RegisterSyntaxNodeAction(ctx =>
@@ -214,17 +197,6 @@ namespace UniMob.Analyzers
             {
                 context.ReportDiagnostic(
                     Diagnostic.Create(AtomAttributeCanBeUsedOnlyOnAtomContainerClasses, context.Node.GetLocation()));
-
-                return;
-            }
-
-            var isLifetimeScope = classSymbol.AllInterfaces
-                .Any(it => SymbolEqualityComparer.Default.Equals(cache.LifetimeScopeTypeSymbol, it));
-
-            if (!isLifetimeScope)
-            {
-                context.ReportDiagnostic(
-                    Diagnostic.Create(AtomAttributeCanBeUsedOnlyOnLifetimeScope, context.Node.GetLocation()));
             }
         }
 
@@ -232,7 +204,6 @@ namespace UniMob.Analyzers
         {
             public INamedTypeSymbol AtomAttributeTypeSymbol;
             public INamedTypeSymbol AtomContainerAttributeTypeSymbol;
-            public INamedTypeSymbol LifetimeScopeTypeSymbol;
         }
     }
 }
