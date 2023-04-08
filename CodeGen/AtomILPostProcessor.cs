@@ -38,13 +38,12 @@ namespace UniMob.Editor.Weaver
             var sw = Stopwatch.StartNew();
 
             var assemblyDefinition = AssemblyDefinitionFor(compiledAssembly);
-            var diagnostics = new List<DiagnosticMessage>();
 
-            diagnostics.AddRange(new AtomWeaverV2().Weave(assemblyDefinition, out var madeAnyChange));
+            var madeAnyChange = new AtomWeaverV2().Weave(assemblyDefinition);
 
-            if (!madeAnyChange || diagnostics.Any(d => d.DiagnosticType == DiagnosticType.Error))
+            if (!madeAnyChange)
             {
-                return new ILPostProcessResult(null, diagnostics);
+                return new ILPostProcessResult(null);
             }
 
             var pe = new MemoryStream();
@@ -60,7 +59,7 @@ namespace UniMob.Editor.Weaver
             UnityEngine.Debug.Log($"Weaved {compiledAssembly.Name} in {sw.ElapsedMilliseconds}ms");
 #endif
 
-            return new ILPostProcessResult(new InMemoryAssembly(pe.ToArray(), pdb.ToArray()), diagnostics);
+            return new ILPostProcessResult(new InMemoryAssembly(pe.ToArray(), pdb.ToArray()));
         }
 
         private static AssemblyDefinition AssemblyDefinitionFor(ICompiledAssembly compiledAssembly)
