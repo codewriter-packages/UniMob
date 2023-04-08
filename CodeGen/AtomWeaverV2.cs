@@ -70,7 +70,7 @@ namespace UniMob.Editor.Weaver
 #if UNIMOB_ATOM_GENERATE_DEBUG_NAMES
             _generateDebugNames = true;
 #endif
-            
+
             _atomType = _module.ImportReference(typeof(ComputedAtom<>));
 
             var atomTypeDef = _atomType.Resolve();
@@ -109,7 +109,7 @@ namespace UniMob.Editor.Weaver
 
             if (!type.IsInterfaceImplemented(_lifetimeScopeInterfaceType))
             {
-                return false;
+                throw CreateInternalException("AtomContainer without ILifetimeScope");
             }
 
             return true;
@@ -125,17 +125,17 @@ namespace UniMob.Editor.Weaver
 
             if (property.GetMethod == null)
             {
-                return false;
+                throw CreateInternalException("Atom without get method");
             }
 
             if (property.GetMethod.IsStatic)
             {
-                return false;
+                throw CreateInternalException("Atom on static property");
             }
 
             if (property.GetMethod.IsAbstract)
             {
-                return false;
+                throw CreateInternalException("Atom on abstract property");
             }
 
             var atomOptions = new AtomOptions
@@ -180,6 +180,11 @@ namespace UniMob.Editor.Weaver
             var name = Helpers.GenerateUniqueFieldName(property.DeclaringType, $"__{property.Name}");
             var atomFieldType = Helpers.MakeGenericType(_atomType, property.PropertyType);
             return new FieldDefinition(name, FieldAttributes.Private, atomFieldType);
+        }
+
+        private static Exception CreateInternalException(string msg)
+        {
+            return new Exception("UniMob CodeGen internal error: " + msg);
         }
 
         private struct AtomOptions
