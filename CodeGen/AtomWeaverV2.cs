@@ -288,7 +288,6 @@ namespace UniMob.Editor.Weaver
             private PropertyDefinition _property;
 
             private Instruction _nullCheckEndInstruction;
-            private Instruction _preReturnInstruction;
 
             private MethodReference _compAndInvalidateMethod;
             private MethodReference _throwIfDisposedMethod;
@@ -299,7 +298,6 @@ namespace UniMob.Editor.Weaver
                 _property = property;
 
                 _nullCheckEndInstruction = Instruction.Create(OpCodes.Nop);
-                _preReturnInstruction = Instruction.Create(OpCodes.Nop);
 
                 var propertyType = property.PropertyType;
                 _compAndInvalidateMethod =
@@ -313,8 +311,6 @@ namespace UniMob.Editor.Weaver
                 var instructions = body.Instructions;
                 var index = 0;
                 Prepend(ref index, instructions);
-
-                body.Instructions.Insert(body.Instructions.Count - 1, _preReturnInstruction);
 
                 body.OptimizeMacros();
             }
@@ -331,14 +327,15 @@ namespace UniMob.Editor.Weaver
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldfld, _atomField));
                 il.Insert(ind++, Instruction.Create(OpCodes.Brfalse, _nullCheckEndInstruction));
 
-                // atom.Invalidate()
+                // if (atom.CompareAndInvalidate()) goto nullCheckEnd;
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_0));
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldfld, _atomField));
                 il.Insert(ind++, Instruction.Create(OpCodes.Ldarg_1));
                 il.Insert(ind++, Instruction.Create(OpCodes.Callvirt, _compAndInvalidateMethod));
                 il.Insert(ind++, Instruction.Create(OpCodes.Brtrue, _nullCheckEndInstruction));
 
-                il.Insert(ind++, Instruction.Create(OpCodes.Br, _preReturnInstruction));
+                // return;
+                il.Insert(ind++, Instruction.Create(OpCodes.Ret));
 
                 il.Insert(ind++, _nullCheckEndInstruction);
             }
