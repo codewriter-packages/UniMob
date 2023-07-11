@@ -1,3 +1,5 @@
+using System;
+
 namespace UniMob
 {
     // ReSharper disable once InconsistentNaming
@@ -45,5 +47,12 @@ namespace UniMob
         /// Note, that reaction will be restarted if it will be activated again.
         /// </summary>
         void Deactivate();
+    }
+
+    // ReSharper disable once InconsistentNaming
+    public interface AtomSink<T>
+    {
+        void SetValue(T value);
+        void SetException(Exception exception);
     }
 }

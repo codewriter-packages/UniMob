@@ -34,7 +34,7 @@ namespace UniMob.Core
             {
                 throw new InvalidOperationException("Cannot reuse non disposed atom");
             }
-            
+
             this.debugName = debugName;
             this.pull = pull ?? throw new ArgumentNullException(nameof(pull));
             options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
@@ -85,7 +85,7 @@ namespace UniMob.Core
             exception = null;
         }
 
-        protected override void Evaluate()
+        protected override void Evaluate(bool activating)
         {
             bool changed;
 
