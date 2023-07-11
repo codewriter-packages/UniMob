@@ -41,7 +41,7 @@ namespace UniMob.Core
             }
         }
 
-        protected override void Evaluate()
+        protected override void Evaluate(bool activating)
         {
             state = AtomState.Actual;
         }

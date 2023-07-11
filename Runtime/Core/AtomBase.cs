@@ -98,7 +98,8 @@ namespace UniMob.Core
             var parent = Stack;
             Stack = this;
 
-            if (options.TrySet(AtomOptions.Active))
+            var activating = options.TrySet(AtomOptions.Active);
+            if (activating)
             {
                 AtomRegistry.OnActivate(this);
             }
@@ -131,13 +132,13 @@ namespace UniMob.Core
 
                 childrenCount = 0;
 
-                Evaluate();
+                Evaluate(activating);
             }
 
             Stack = parent;
         }
 
-        protected abstract void Evaluate();
+        protected abstract void Evaluate(bool activating);
 
         protected void ObsoleteSubscribers()
         {
