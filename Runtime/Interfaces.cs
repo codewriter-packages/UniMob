@@ -55,4 +55,10 @@ namespace UniMob
         void SetValue(T value);
         void SetException(Exception exception);
     }
+
+    // ReSharper disable once InconsistentNaming
+    public interface AsyncAtom<T> : Atom<AtomAsyncValue<T>>
+    {
+        void Reload(bool clearValue = true);
+    }
 }
