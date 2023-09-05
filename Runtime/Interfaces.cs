@@ -57,6 +57,7 @@ namespace UniMob
         void SetException(Exception exception);
     }
     
+    [Obsolete("ILifetimeController is obsolete. Use LifetimeController instead")]
     public interface ILifetimeController : IDisposable
     {
         bool IsDisposed { get; }
