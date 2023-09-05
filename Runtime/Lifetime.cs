@@ -40,6 +40,11 @@ namespace UniMob
             Controller.Register(disposable);
         }
 
+        internal void UnregisterInternal(object obj)
+        {
+            Controller.UnregisterInternal(obj);
+        }
+
         /// <summary>
         /// Whether current lifetime is equal to <see cref="Eternal"/> and never be disposed
         /// </summary>
@@ -76,6 +81,19 @@ namespace UniMob
             return nested;
         }
 
+        /// <summary>
+        /// Create lifetime nested into current lifetime.
+        /// </summary>
+        /// <param name="lifetime">Nested lifetime.</param>
+        /// <returns>Created nested lifetime disposer.</returns>
+        public NestedLifetimeDisposer CreateNested(out Lifetime lifetime)
+        {
+            var nested = new LifetimeController();
+            Controller.Register(nested);
+            lifetime = nested.Lifetime;
+            return new NestedLifetimeDisposer(Controller, nested);
+        }
+
         public override bool Equals(object obj)
         {
             return obj is Lifetime other && Equals(other);
@@ -99,6 +117,42 @@ namespace UniMob
         public static implicit operator CancellationToken(Lifetime lifetime)
         {
             return lifetime.Controller.ToCancellationToken();
+        }
+    }
+
+    public struct NestedLifetimeDisposer : IDisposable
+    {
+        private LifetimeController _parent;
+        private LifetimeController _child;
+
+        public NestedLifetimeDisposer(LifetimeController parent, LifetimeController child)
+        {
+            _parent = parent;
+            _child = child;
+        }
+
+        public void Dispose()
+        {
+            _parent.UnregisterInternal(_child);
+            _child.Dispose();
+        }
+
+        /// <summary>
+        /// Add action that will be invoked when lifetime disposing start
+        /// </summary>
+        /// <param name="action">Action to invoke.</param>
+        public void Register(Action action)
+        {
+            _child.Register(action);
+        }
+
+        /// <summary>
+        /// Add disposable object that will be disposed when lifetime disposing start
+        /// </summary>
+        /// <param name="disposable">Disposable object</param>
+        public void Register(IDisposable disposable)
+        {
+            _child.Register(disposable);
         }
     }
 }

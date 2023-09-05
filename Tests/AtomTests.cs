@@ -59,9 +59,9 @@ namespace UniMob.Tests
         {
             Atom<int> target;
 
-            using (var nested = Lifetime.CreateNested())
+            using (Lifetime.CreateNested(out var nestedLifetime))
             {
-                target = Atom.Computed(nested.Lifetime, () => 1);
+                target = Atom.Computed(nestedLifetime, () => 1);
                 target.Get();
             }
 
@@ -73,9 +73,9 @@ namespace UniMob.Tests
         {
             var target = Atom.Computed(Lifetime, () => 1);
 
-            using (var nested = Lifetime.CreateNested())
+            using (Lifetime.CreateNested(out var nestedLifetime))
             {
-                Atom.Reaction(nested.Lifetime, () => target.Get());
+                Atom.Reaction(nestedLifetime, () => target.Get());
             }
 
             AtomAssert.That(target).SubscribersCountAreEqualTo(0);
@@ -86,9 +86,9 @@ namespace UniMob.Tests
         public void Dispose()
         {
             Atom<int> atom;
-            using (var nested = Lifetime.CreateNested())
+            using ( Lifetime.CreateNested(out var nestedLifetime))
             {
-                atom = Atom.Value(nested.Lifetime, 0, debugName: "DisposedAtom");
+                atom = Atom.Value(nestedLifetime, 0, debugName: "DisposedAtom");
             }
 
             atom.Get();
@@ -383,14 +383,14 @@ namespace UniMob.Tests
             var result = 0;
             var errors = 0;
 
-            var nested = Lifetime.CreateNested();
+            var nestedDisposer = Lifetime.CreateNested(out var nestedLifetime);
 
-            Atom.Reaction(nested.Lifetime, () => middle.Value, value =>
+            Atom.Reaction(nestedLifetime, () => middle.Value, value =>
             {
                 result = value;
                 if (value == 2)
                 {
-                    nested.Dispose();
+                    nestedDisposer.Dispose();
                 }
             }, ex => ++errors);
 
@@ -611,10 +611,10 @@ namespace UniMob.Tests
         [Test]
         public void SubscriptionOnDisposedAtomDoesNotLeadToActualization()
         {
-            using (var lc = Lifetime.CreateNested())
+            using (Lifetime.CreateNested(out var nestedLifetime))
             {
-                var source = Atom.Value(lc.Lifetime, 0);
-                Atom.Reaction(Lifetime, () => !lc.IsDisposed ? source.Value : 0, v => { });
+                var source = Atom.Value(nestedLifetime, 0);
+                Atom.Reaction(Lifetime, () => !nestedLifetime.IsDisposed ? source.Value : 0, v => { });
 
                 AtomScheduler.Sync();
             }
