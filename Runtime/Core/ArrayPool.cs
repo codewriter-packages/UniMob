@@ -5,7 +5,9 @@ namespace UniMob.Core
 {
     internal static class ArrayPool<T> where T : class
     {
-        internal static readonly Stack<T[]>[] Pool = new Stack<T[]>[30];
+        internal const int PoolsCount = 30;
+
+        internal static readonly Stack<T[]>[] Pool = new Stack<T[]>[PoolsCount];
 
         static ArrayPool()
         {
@@ -66,10 +68,10 @@ namespace UniMob.Core
             GetPool(array.Length).Push(array);
         }
 
-        private static Stack<T[]> GetPool(int len)
+        internal static Stack<T[]> GetPool(int len)
         {
             var i = 0;
-            while (i < Pool.Length && len != 1 << i)
+            while (i < PoolsCount && len != 1 << i)
             {
                 i++;
             }
