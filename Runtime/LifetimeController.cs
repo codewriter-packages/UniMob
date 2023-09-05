@@ -1,19 +1,22 @@
 using System;
 using System.Threading;
 using JetBrains.Annotations;
+using UniMob.Core;
 using UnityEngine;
 
 namespace UniMob
 {
     public class LifetimeController : ILifetimeController
     {
-        internal static readonly ILifetimeController Eternal = new LifetimeController();
-        internal static readonly ILifetimeController Terminated = new LifetimeController();
+        internal static readonly LifetimeController Eternal = new LifetimeController();
+        internal static readonly LifetimeController Terminated = new LifetimeController();
 
         internal int registrationCount;
         internal object[] registrations;
 
         internal CancellationTokenSource cancellationTokenSource;
+
+        internal bool hasEmptySlots;
 
         static LifetimeController()
         {
@@ -51,31 +54,34 @@ namespace UniMob
 
             IsDisposed = true;
 
-            for (var i = registrationCount - 1; i >= 0; i--)
+            if (registrationCount > 0)
             {
-                try
+                for (var i = registrationCount - 1; i >= 0; i--)
                 {
-                    switch (registrations[i])
+                    try
                     {
-                        case IDisposable disposable:
-                            disposable.Dispose();
-                            break;
+                        switch (registrations[i])
+                        {
+                            case IDisposable disposable:
+                                disposable.Dispose();
+                                break;
 
-                        case Action action:
-                            action.Invoke();
-                            break;
+                            case Action action:
+                                action.Invoke();
+                                break;
+                        }
                     }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogException(e);
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
+
+                    registrations[i] = null;
                 }
 
-                registrations[i] = null;
+                registrationCount = 0;
+                ArrayPool<object>.Return(ref registrations);
             }
-
-            registrationCount = 0;
-            registrations = null;
 
             cancellationTokenSource?.Cancel();
 
@@ -110,38 +116,72 @@ namespace UniMob
 
             if (registrations == null)
             {
-                registrations = new object[1];
+                ArrayPool<object>.Rent(out registrations, 2);
             }
-
-            if (registrationCount == registrations.Length)
+            else if (registrationCount == registrations.Length)
             {
-                var newRegistrationCount = 0;
-                for (var i = 0; i < registrationCount; i++)
+                if (hasEmptySlots)
                 {
-                    if (registrations[i] is ILifetimeController lc && lc.IsDisposed)
-                    {
-                        registrations[i] = null;
-                    }
-                    else
-                    {
-                        registrations[newRegistrationCount++] = registrations[i];
-                    }
+                    CompressEmptySlots();
                 }
-
-                for (var i = newRegistrationCount; i < registrationCount; i++)
+                else
                 {
-                    registrations[i] = null;
-                }
-
-                registrationCount = newRegistrationCount;
-
-                if (newRegistrationCount * 2 > registrations.Length)
-                {
-                    Array.Resize(ref registrations, newRegistrationCount * 2);
+                    ArrayPool<object>.Grow(ref registrations);
                 }
             }
 
             registrations[registrationCount++] = obj;
+        }
+
+        internal void UnregisterInternal(object obj)
+        {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
+            if (IsDisposed)
+            {
+                throw new ObjectDisposedException("Cannot Register on disposed Lifetime");
+            }
+
+            if (IsEternal)
+            {
+                return;
+            }
+
+            for (var i = 0; i < registrationCount; i++)
+            {
+                if (registrations[i] != obj)
+                {
+                    continue;
+                }
+
+                registrations[i] = null;
+                hasEmptySlots = true;
+                break;
+            }
+        }
+
+        private void CompressEmptySlots()
+        {
+            hasEmptySlots = false;
+
+            var newRegistrationCount = 0;
+            for (var i = 0; i < registrationCount; i++)
+            {
+                if (registrations[i] != null)
+                {
+                    registrations[newRegistrationCount++] = registrations[i];
+                }
+            }
+
+            for (var i = newRegistrationCount; i < registrationCount; i++)
+            {
+                registrations[i] = null;
+            }
+
+            registrationCount = newRegistrationCount;
         }
 
         private CancellationTokenSource CreateCtsLazily()

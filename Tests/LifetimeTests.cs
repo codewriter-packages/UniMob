@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using NUnit.Framework;
 
@@ -163,6 +164,88 @@ namespace UniMob.Tests
             CancellationToken token = Lifetime.Terminated;
 
             Assert.IsTrue(token.IsCancellationRequested);
+        }
+
+        [Test]
+        public void AllocateRegistrationTest()
+        {
+            Core.ArrayPool<object>.ClearCache();
+
+            var nestedController = _controller.Lifetime.CreateNested();
+            nestedController.Register(() => { });
+            nestedController.Dispose();
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
+
+            Assert.AreEqual(0, Core.ArrayPool<object>.GetPool(4).Count);
+        }
+
+        [Test]
+        public void GrowRegistrationTest()
+        {
+            Core.ArrayPool<object>.ClearCache();
+
+            var nestedController = _controller.Lifetime.CreateNested();
+            nestedController.Register(() => { });
+            nestedController.Register(() => { });
+            nestedController.Register(() => { });
+            nestedController.Dispose();
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(4).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(4), Is.All.All.Null);
+        }
+
+        [Test]
+        public void CompressRegistrationTest()
+        {
+            var action = new Action(() => { });
+
+            Core.ArrayPool<object>.ClearCache();
+
+            var nestedController = _controller.Lifetime.CreateNested();
+            nestedController.Register(action);
+            nestedController.Register(() => { });
+            nestedController.UnregisterInternal(action);
+            nestedController.Register(() => { });
+            nestedController.Dispose();
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
+
+            Assert.AreEqual(0, Core.ArrayPool<object>.GetPool(4).Count);
+        }
+
+
+        [Test]
+        public void CompressTest()
+        {
+            var action1 = new Action(() => { });
+            var action2 = new Action(() => { });
+            var action3 = new Action(() => { });
+            var action4 = new Action(() => { });
+
+            Core.ArrayPool<object>.ClearCache();
+
+            var nestedController = _controller.Lifetime.CreateNested();
+            nestedController.Register(action1);
+            nestedController.Register(action2);
+            nestedController.Register(action3);
+            nestedController.Register(action4);
+            nestedController.UnregisterInternal(action1);
+            nestedController.UnregisterInternal(action2);
+            nestedController.UnregisterInternal(action3);
+            nestedController.Register(() => { });
+            nestedController.Dispose();
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(4).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(4), Is.All.All.Null);
         }
     }
 }
