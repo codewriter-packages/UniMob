@@ -36,9 +36,9 @@ namespace UniMob
             Action<Exception> exceptionHandler = null,
             string debugName = null)
         {
-            var controller = lifetime.CreateNested();
+            var disposer = lifetime.CreateNested(out var reactionLifetime);
 
-            return Reaction(controller.Lifetime, WhenInternal, debugName: debugName);
+            return Reaction(reactionLifetime, WhenInternal, debugName: debugName);
 
             void WhenInternal()
             {
@@ -72,7 +72,7 @@ namespace UniMob
                         effect();
                     }
 
-                    controller.Dispose();
+                    disposer.Dispose();
                 }
             }
         }
@@ -101,12 +101,12 @@ namespace UniMob
             Func<bool> data,
             string debugName = null)
         {
-            var controller = lifetime.CreateNested();
+            var disposer = lifetime.CreateNested(out var reactionLifetime);
             var tcs = new TaskCompletionSource<object>();
 
-            controller.Register(() => tcs.TrySetCanceled());
+            disposer.Register(() => tcs.TrySetCanceled());
 
-            Reaction(controller.Lifetime, WhenInternal, debugName: debugName);
+            Reaction(reactionLifetime, WhenInternal, debugName: debugName);
 
             return tcs.Task;
 
@@ -136,7 +136,7 @@ namespace UniMob
                         tcs.TrySetResult(null);
                     }
 
-                    controller.Dispose();
+                    disposer.Dispose();
                 }
             }
         }

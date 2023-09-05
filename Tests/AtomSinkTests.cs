@@ -70,9 +70,9 @@ namespace UniMob.Tests
             var unsubscribeTimes = 0;
             Atom<int> target;
 
-            using (var nested = Lifetime.CreateNested())
+            using (Lifetime.CreateNested(out var nestedLifetime))
             {
-                target = Atom.FromSink(nested.Lifetime, 0, _ => { }, () => ++unsubscribeTimes);
+                target = Atom.FromSink(nestedLifetime, 0, _ => { }, () => ++unsubscribeTimes);
                 target.Get();
             }
 
