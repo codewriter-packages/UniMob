@@ -88,7 +88,17 @@ namespace UniMob
         /// <returns>Created nested lifetime disposer.</returns>
         public NestedLifetimeDisposer CreateNested(out Lifetime lifetime)
         {
-            var nested = new LifetimeController();
+            LifetimeController nested;
+            if (LifetimeController.Pool.Count > 0)
+            {
+                nested = LifetimeController.Pool.Pop();
+                nested.Setup();
+            }
+            else
+            {
+                nested = new LifetimeController();
+            }
+
             Controller.Register(nested);
             lifetime = nested.Lifetime;
             return new NestedLifetimeDisposer(Controller, nested);
@@ -135,6 +145,8 @@ namespace UniMob
         {
             _parent.UnregisterInternal(_child);
             _child.Dispose();
+
+            LifetimeController.Pool.Push(_child);
         }
 
         /// <summary>
