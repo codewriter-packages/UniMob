@@ -104,9 +104,9 @@ namespace UniMob.Tests
         [Test]
         public void WhenDisposingNestedLifetime_ThenRootLifetimeSteelAlive()
         {
-            var nestedController = _controller.Lifetime.CreateNested();
+            var nestedDisposer = _controller.Lifetime.CreateNested(out var nestedLifetime);
 
-            nestedController.Dispose();
+            nestedDisposer.Dispose();
 
             Assert.IsFalse(_controller.IsDisposed);
         }
@@ -114,11 +114,11 @@ namespace UniMob.Tests
         [Test]
         public void WhenDisposingRootLifetime_AndNestedCreated_ThenNestedLifetimeDisposed()
         {
-            var nestedController = _controller.Lifetime.CreateNested();
+            _controller.Lifetime.CreateNested(out var nestedLifetime);
 
             _controller.Dispose();
 
-            Assert.IsTrue(nestedController.IsDisposed);
+            Assert.IsTrue(nestedLifetime.IsDisposed);
         }
 
         [Test]
@@ -171,9 +171,10 @@ namespace UniMob.Tests
         {
             Core.ArrayPool<object>.ClearCache();
 
-            var nestedController = _controller.Lifetime.CreateNested();
-            nestedController.Register(() => { });
-            nestedController.Dispose();
+            using (_controller.Lifetime.CreateNested(out var nested))
+            {
+                nested.Register(() => { });
+            }
 
             Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
             Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
@@ -186,11 +187,12 @@ namespace UniMob.Tests
         {
             Core.ArrayPool<object>.ClearCache();
 
-            var nestedController = _controller.Lifetime.CreateNested();
-            nestedController.Register(() => { });
-            nestedController.Register(() => { });
-            nestedController.Register(() => { });
-            nestedController.Dispose();
+            using (_controller.Lifetime.CreateNested(out var nested))
+            {
+                nested.Register(() => { });
+                nested.Register(() => { });
+                nested.Register(() => { });
+            }
 
             Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
             Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
@@ -206,12 +208,13 @@ namespace UniMob.Tests
 
             Core.ArrayPool<object>.ClearCache();
 
-            var nestedController = _controller.Lifetime.CreateNested();
-            nestedController.Register(action);
-            nestedController.Register(() => { });
-            nestedController.UnregisterInternal(action);
-            nestedController.Register(() => { });
-            nestedController.Dispose();
+            using (_controller.Lifetime.CreateNested(out var nested))
+            {
+                nested.Register(action);
+                nested.Register(() => { });
+                nested.UnregisterInternal(action);
+                nested.Register(() => { });
+            }
 
             Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
             Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
@@ -230,16 +233,17 @@ namespace UniMob.Tests
 
             Core.ArrayPool<object>.ClearCache();
 
-            var nestedController = _controller.Lifetime.CreateNested();
-            nestedController.Register(action1);
-            nestedController.Register(action2);
-            nestedController.Register(action3);
-            nestedController.Register(action4);
-            nestedController.UnregisterInternal(action1);
-            nestedController.UnregisterInternal(action2);
-            nestedController.UnregisterInternal(action3);
-            nestedController.Register(() => { });
-            nestedController.Dispose();
+            using (_controller.Lifetime.CreateNested(out var nested))
+            {
+                nested.Register(action1);
+                nested.Register(action2);
+                nested.Register(action3);
+                nested.Register(action4);
+                nested.UnregisterInternal(action1);
+                nested.UnregisterInternal(action2);
+                nested.UnregisterInternal(action3);
+                nested.Register(() => { });
+            }
 
             Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
             Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
