@@ -1,13 +1,17 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
 using UniMob.Core;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace UniMob
 {
     public class LifetimeController : ILifetimeController
     {
+        internal static readonly Stack<LifetimeController> Pool = new Stack<LifetimeController>();
+
         internal static readonly LifetimeController Eternal = new LifetimeController();
         internal static readonly LifetimeController Terminated = new LifetimeController();
 
@@ -38,6 +42,18 @@ namespace UniMob
         public void Register([NotNull] IDisposable disposable)
         {
             RegisterInternal(disposable);
+        }
+
+        internal void Setup()
+        {
+            Assert.IsFalse(IsEternal);
+            Assert.IsTrue(IsDisposed);
+            Assert.IsFalse(hasEmptySlots);
+            Assert.IsNull(registrations);
+            Assert.AreEqual(0, registrationCount);
+            Assert.IsNull(cancellationTokenSource);
+
+            IsDisposed = false;
         }
 
         public void Dispose()
@@ -83,6 +99,7 @@ namespace UniMob
                 ArrayPool<object>.Return(ref registrations);
             }
 
+            hasEmptySlots = false;
             cancellationTokenSource?.Cancel();
 
             if (!ReferenceEquals(this, Terminated))
