@@ -13,11 +13,11 @@ namespace UniMob
     /// </summary>
     public readonly struct Lifetime : IEquatable<Lifetime>
     {
-        private readonly ILifetimeController _controller;
+        private readonly LifetimeController _controller;
 
-        private ILifetimeController Controller => _controller ?? LifetimeController.Eternal;
+        private LifetimeController Controller => _controller ?? LifetimeController.Eternal;
 
-        internal Lifetime([NotNull] ILifetimeController controller)
+        internal Lifetime([NotNull] LifetimeController controller)
         {
             _controller = controller ?? throw new ArgumentNullException(nameof(controller));
         }
@@ -69,7 +69,7 @@ namespace UniMob
         /// Create lifetime controller nested into current lifetime.
         /// </summary>
         /// <returns>Created nested lifetime controller.</returns>
-        public ILifetimeController CreateNested()
+        public LifetimeController CreateNested()
         {
             var nested = new LifetimeController();
             Controller.Register(nested);
