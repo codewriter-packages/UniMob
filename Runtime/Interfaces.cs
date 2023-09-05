@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace UniMob
 {
@@ -54,5 +55,21 @@ namespace UniMob
     {
         void SetValue(T value);
         void SetException(Exception exception);
+    }
+    
+    public interface ILifetimeController : IDisposable
+    {
+        bool IsDisposed { get; }
+        Lifetime Lifetime { get; }
+
+        void Register(Action action);
+        void Register(IDisposable disposable);
+
+        CancellationToken ToCancellationToken();
+    }
+    
+    public interface ILifetimeScope
+    {
+        Lifetime Lifetime { get; }
     }
 }
