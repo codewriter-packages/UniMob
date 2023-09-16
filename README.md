@@ -2,7 +2,6 @@
 
 UniMob is a library that makes state management simple and scalable by transparently applying functional reactive programming. The philosophy behind UniMob is very simple:
 
-> [!IMPORTANT]
 > _Anything that can be derived from the application state, should be derived. Automatically._
 
 <hr/>
