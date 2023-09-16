@@ -5,6 +5,8 @@ UniMob is a library that makes state management simple and scalable by transpare
 > [!IMPORTANT]
 > _Anything that can be derived from the application state, should be derived. Automatically._
 
+<hr/>
+
 :small_blue_diamond: **Long lived.** More than five years of development and support<br/>
 :small_blue_diamond: **Battle tested.** Used in games with millions of players<br/>
 :small_blue_diamond: **Modern.** Based on the latest trends<br/>
@@ -139,8 +141,7 @@ Atom.Reaction(Lifetime, () => {
 
 > [!IMPORTANT]
 > Why does a new message get printed each time the UnfinishedTodoCount is changed? The answer is this rule of thumb:<br/>
-> <br/>
-> _UniMob reacts to any existing observable property that is read during the execution of a tracked function._
+> **_UniMob reacts to any existing observable property that is read during the execution of a tracked function._**
 
 ### :label: Lifetime
 
