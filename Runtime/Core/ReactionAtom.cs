@@ -6,7 +6,7 @@ namespace UniMob.Core
 {
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    public class ReactionAtom : AtomBase, Reaction
+    public sealed class ReactionAtom : AtomBase, Reaction
     {
         internal readonly Action reaction;
         internal readonly Action<Exception> exceptionHandler;

@@ -2,35 +2,35 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
-using JetBrains.Annotations;
 using Unity.IL2CPP.CompilerServices;
 
 namespace UniMob.Core
 {
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    public class ComputedAtom<T> : AtomBase, Atom<T>
+    public sealed class ComputedAtom<T> : AtomBase, MutableAtom<T>
     {
         internal static Stack<ComputedAtom<T>> Pool;
 
         internal Func<T> pull;
-        internal IEqualityComparer<T> comparer;
+        internal Action<T> push;
 
         internal T cache;
         internal ExceptionDispatchInfo exception;
 
         internal ComputedAtom(
             string debugName,
-            [NotNull] Func<T> pull,
+            Func<T> pull,
+            Action<T> push,
             AtomOptions options)
         {
             this.debugName = debugName;
-            this.pull = pull ?? throw new ArgumentNullException(nameof(pull));
+            this.pull = pull;
+            this.push = push;
             this.options = options;
-            comparer = EqualityComparer<T>.Default;
         }
 
-        internal void Setup(string debugName, Func<T> pull, AtomOptions options)
+        internal void Setup(string debugName, Func<T> pull, Action<T> push, AtomOptions options)
         {
             if (!this.options.Has(AtomOptions.Disposed))
             {
@@ -38,7 +38,8 @@ namespace UniMob.Core
             }
 
             this.debugName = debugName;
-            this.pull = pull ?? throw new ArgumentNullException(nameof(pull));
+            this.pull = pull;
+            this.push = push;
             this.options = options;
         }
 
@@ -63,7 +64,7 @@ namespace UniMob.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool CompareAndInvalidate(T value)
         {
-            if (options.Has(AtomOptions.HasCache) && comparer.Equals(value, cache))
+            if (options.Has(AtomOptions.HasCache) && EqualityComparer<T>.Default.Equals(value, cache))
             {
                 return false;
             }
@@ -85,6 +86,13 @@ namespace UniMob.Core
                 }
 
                 return cache;
+            }
+            set
+            {
+                if (CompareAndInvalidate(value))
+                {
+                    push(value);
+                }
             }
         }
 
@@ -108,7 +116,7 @@ namespace UniMob.Core
 
                 var value = pull();
 
-                if (options.Has(AtomOptions.HasCache) && comparer.Equals(value, cache))
+                if (options.Has(AtomOptions.HasCache) && EqualityComparer<T>.Default.Equals(value, cache))
                 {
                     return;
                 }

@@ -84,7 +84,7 @@ namespace UniMob
             bool keepAlive = false, string debugName = null)
         {
             var options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
-            var atom = new ComputedAtom<T>(debugName, pull, options);
+            var atom = new ComputedAtom<T>(debugName, pull, null, options);
             lifetime.Register(atom);
             return atom;
         }
@@ -123,7 +123,7 @@ namespace UniMob
             bool keepAlive = false, string debugName = null)
         {
             var options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
-            var atom = new MutableComputedAtom<T>(debugName, pull, push, options);
+            var atom = new ComputedAtom<T>(debugName, pull, push, options);
             lifetime.Register(atom);
             return atom;
         }

@@ -13,8 +13,6 @@ namespace UniMob.Core
         internal Action<AtomSink<T>> subscribe;
         internal Action unsubscribe;
 
-        internal IEqualityComparer<T> comparer;
-
         internal T value;
         internal ExceptionDispatchInfo exception;
 
@@ -28,7 +26,6 @@ namespace UniMob.Core
             this.subscribe = subscribe;
             this.unsubscribe = unsubscribe;
             this.debugName = debugName;
-            comparer = EqualityComparer<T>.Default;
 
             options.Set(AtomOptions.HasCache);
             value = initialValue;
@@ -105,7 +102,7 @@ namespace UniMob.Core
 
         public void SetValue(T newValue)
         {
-            if (options.Has(AtomOptions.HasCache) && comparer.Equals(newValue, value))
+            if (options.Has(AtomOptions.HasCache) && EqualityComparer<T>.Default.Equals(newValue, value))
             {
                 return;
             }
