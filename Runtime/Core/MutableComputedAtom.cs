@@ -14,8 +14,8 @@ namespace UniMob.Core
             string debugName,
             [NotNull] Func<T> pull,
             [NotNull] Action<T> push,
-            bool keepAlive = false)
-            : base(debugName, pull, keepAlive)
+            AtomOptions options)
+            : base(debugName, pull, options)
         {
             this.push = push ?? throw new ArgumentNullException(nameof(push));
         }
