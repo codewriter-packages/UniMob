@@ -29,7 +29,7 @@ namespace UniMob.Core
             return ReferenceEquals(this, other);
         }
 
-        void IDisposable.Dispose()
+        public virtual void Dispose()
         {
             Deactivate();
 

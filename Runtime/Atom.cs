@@ -83,7 +83,8 @@ namespace UniMob
         public static Atom<T> Computed<T>(Lifetime lifetime, Func<T> pull,
             bool keepAlive = false, string debugName = null)
         {
-            var atom = new ComputedAtom<T>(debugName, pull, keepAlive);
+            var options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
+            var atom = new ComputedAtom<T>(debugName, pull, options);
             lifetime.Register(atom);
             return atom;
         }
@@ -121,7 +122,8 @@ namespace UniMob
         public static MutableAtom<T> Computed<T>(Lifetime lifetime, Func<T> pull, Action<T> push,
             bool keepAlive = false, string debugName = null)
         {
-            var atom = new MutableComputedAtom<T>(debugName, pull, push, keepAlive);
+            var options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
+            var atom = new MutableComputedAtom<T>(debugName, pull, push, options);
             lifetime.Register(atom);
             return atom;
         }

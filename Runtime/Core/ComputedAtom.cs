@@ -11,6 +11,8 @@ namespace UniMob.Core
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     public class ComputedAtom<T> : AtomBase, Atom<T>
     {
+        internal static Stack<ComputedAtom<T>> Pool;
+
         internal Func<T> pull;
         internal IEqualityComparer<T> comparer;
 
@@ -20,11 +22,11 @@ namespace UniMob.Core
         internal ComputedAtom(
             string debugName,
             [NotNull] Func<T> pull,
-            bool keepAlive = false)
+            AtomOptions options)
         {
             this.debugName = debugName;
             this.pull = pull ?? throw new ArgumentNullException(nameof(pull));
-            options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
+            this.options = options;
             comparer = EqualityComparer<T>.Default;
         }
 
@@ -38,6 +40,16 @@ namespace UniMob.Core
             this.debugName = debugName;
             this.pull = pull ?? throw new ArgumentNullException(nameof(pull));
             options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            if (options.Has(AtomOptions.AutoReturnToPool))
+            {
+                GetPool().Push(this);
+            }
         }
 
         // for CodeGen
@@ -134,6 +146,16 @@ namespace UniMob.Core
             exception = null;
 
             base.Invalidate();
+        }
+
+        internal static Stack<ComputedAtom<T>> GetPool()
+        {
+            if (Pool != null)
+            {
+                return Pool;
+            }
+
+            return Pool = new Stack<ComputedAtom<T>>();
         }
     }
 }

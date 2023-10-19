@@ -11,6 +11,7 @@ namespace UniMob.Core
         AutoActualize = 1 << 0,
         Active = 1 << 1,
         Disposed = 1 << 2,
+        AutoReturnToPool = 1 << 3,
 
         HasCache = 1 << 6,
         NextDirectEvaluate = 1 << 7,

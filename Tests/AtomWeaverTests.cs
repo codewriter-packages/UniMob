@@ -24,37 +24,32 @@ namespace UniMob.Tests
         [Test]
         public void Pooling()
         {
-            CodeGenAtom.Pool<int>.Clear();
+            ComputedAtom<int>.GetPool().Clear();
 
             using (var lc = new LifetimeController())
             {
                 var c = new TestClass(lc.Lifetime);
 
-                Assert.AreEqual(0, CodeGenAtom.Pool<int>.Atoms.Count);
-                Assert.AreEqual(0, CodeGenAtom.Pool<int>.Recyclers.Count);
+                Assert.AreEqual(0, ComputedAtom<int>.GetPool().Count);
 
                 c.GetValue();
 
-                Assert.AreEqual(0, CodeGenAtom.Pool<int>.Atoms.Count);
-                Assert.AreEqual(0, CodeGenAtom.Pool<int>.Recyclers.Count);
+                Assert.AreEqual(0, ComputedAtom<int>.GetPool().Count);
 
                 lc.Dispose();
 
-                Assert.AreEqual(1, CodeGenAtom.Pool<int>.Atoms.Count);
-                Assert.AreEqual(1, CodeGenAtom.Pool<int>.Recyclers.Count);
+                Assert.AreEqual(1, ComputedAtom<int>.GetPool().Count);
             }
 
             using (var lc2 = new LifetimeController())
             {
                 var c2 = new TestClass(lc2.Lifetime);
 
-                Assert.AreEqual(1, CodeGenAtom.Pool<int>.Atoms.Count);
-                Assert.AreEqual(1, CodeGenAtom.Pool<int>.Recyclers.Count);
+                Assert.AreEqual(1, ComputedAtom<int>.GetPool().Count);
 
                 c2.GetValue();
 
-                Assert.AreEqual(0, CodeGenAtom.Pool<int>.Atoms.Count);
-                Assert.AreEqual(0, CodeGenAtom.Pool<int>.Recyclers.Count);
+                Assert.AreEqual(0, ComputedAtom<int>.GetPool().Count);
             }
         }
 
