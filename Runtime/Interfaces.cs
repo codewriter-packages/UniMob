@@ -56,7 +56,13 @@ namespace UniMob
         void SetValue(T value);
         void SetException(Exception exception);
     }
-    
+
+    // ReSharper disable once InconsistentNaming
+    public interface AsyncAtom<T> : Atom<AtomAsyncValue<T>>
+    {
+        void Reload(bool clearValue = true);
+    }
+
     [Obsolete("ILifetimeController is obsolete. Use LifetimeController instead")]
     public interface ILifetimeController : IDisposable
     {
