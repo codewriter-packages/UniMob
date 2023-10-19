@@ -67,9 +67,7 @@ namespace UniMob
             {
                 return;
             }
-
-            IsDisposed = true;
-
+            
             if (registrationCount > 0)
             {
                 for (var i = registrationCount - 1; i >= 0; i--)
@@ -98,7 +96,8 @@ namespace UniMob
                 registrationCount = 0;
                 ArrayPool<object>.Return(ref registrations);
             }
-
+            
+            IsDisposed = true;
             hasEmptySlots = false;
             cancellationTokenSource?.Cancel();
 
