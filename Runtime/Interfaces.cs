@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace UniMob
 {
@@ -60,5 +61,22 @@ namespace UniMob
     public interface AsyncAtom<T> : Atom<AtomAsyncValue<T>>
     {
         void Reload(bool clearValue = true);
+    }
+
+    [Obsolete("ILifetimeController is obsolete. Use LifetimeController instead")]
+    public interface ILifetimeController : IDisposable
+    {
+        bool IsDisposed { get; }
+        Lifetime Lifetime { get; }
+
+        void Register(Action action);
+        void Register(IDisposable disposable);
+
+        CancellationToken ToCancellationToken();
+    }
+    
+    public interface ILifetimeScope
+    {
+        Lifetime Lifetime { get; }
     }
 }

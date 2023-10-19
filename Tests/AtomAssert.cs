@@ -62,6 +62,24 @@ namespace UniMob.Tests
             }
 
             [AssertionMethod]
+            public void IsDisposed()
+            {
+                if (!_atom.options.Has(AtomOptions.Disposed))
+                {
+                    Assert.Fail($"Atom '{_atom}' is not disposed");
+                }
+            }
+            
+            [AssertionMethod]
+            public void IsNotDisposed()
+            {
+                if (_atom.options.Has(AtomOptions.Disposed))
+                {
+                    Assert.Fail($"Atom '{_atom}' is disposed");
+                }
+            }
+
+            [AssertionMethod]
             public void StateIs(AtomState state)
             {
                 if (_atom.state != state)

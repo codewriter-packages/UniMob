@@ -59,9 +59,9 @@ namespace UniMob.Tests
         {
             Atom<int> target;
 
-            using (var nested = Lifetime.CreateNested())
+            using (Lifetime.CreateNested(out var nestedLifetime))
             {
-                target = Atom.Computed(nested.Lifetime, () => 1);
+                target = Atom.Computed(nestedLifetime, () => 1);
                 target.Get();
             }
 
@@ -73,9 +73,9 @@ namespace UniMob.Tests
         {
             var target = Atom.Computed(Lifetime, () => 1);
 
-            using (var nested = Lifetime.CreateNested())
+            using (Lifetime.CreateNested(out var nestedLifetime))
             {
-                Atom.Reaction(nested.Lifetime, () => target.Get());
+                Atom.Reaction(nestedLifetime, () => target.Get());
             }
 
             AtomAssert.That(target).SubscribersCountAreEqualTo(0);
@@ -86,9 +86,9 @@ namespace UniMob.Tests
         public void Dispose()
         {
             Atom<int> atom;
-            using (var nested = Lifetime.CreateNested())
+            using ( Lifetime.CreateNested(out var nestedLifetime))
             {
-                atom = Atom.Value(nested.Lifetime, 0, debugName: "DisposedAtom");
+                atom = Atom.Value(nestedLifetime, 0, debugName: "DisposedAtom");
             }
 
             atom.Get();
@@ -356,7 +356,7 @@ namespace UniMob.Tests
             var watch = "";
 
             var source = Atom.Value(Lifetime, 0);
-            Atom.When(Lifetime, () => source.Value > 1, () => watch += "B");
+            var reaction = Atom.When(Lifetime, () => source.Value > 1, () => watch += "B");
 
             AtomScheduler.Sync();
             Assert.AreEqual("", watch);
@@ -364,10 +364,12 @@ namespace UniMob.Tests
             source.Value = 1;
             AtomScheduler.Sync();
             Assert.AreEqual("", watch);
+            AtomAssert.That(reaction).IsNotDisposed();
 
             source.Value = 2;
             AtomScheduler.Sync();
             Assert.AreEqual("B", watch);
+            AtomAssert.That(reaction).IsDisposed();
 
             source.Value = 3;
             AtomScheduler.Sync();
@@ -383,14 +385,14 @@ namespace UniMob.Tests
             var result = 0;
             var errors = 0;
 
-            var nested = Lifetime.CreateNested();
+            var nestedDisposer = Lifetime.CreateNested(out var nestedLifetime);
 
-            Atom.Reaction(nested.Lifetime, () => middle.Value, value =>
+            var reaction = Atom.Reaction(nestedLifetime, () => middle.Value, value =>
             {
                 result = value;
                 if (value == 2)
                 {
-                    nested.Dispose();
+                    nestedDisposer.Dispose();
                 }
             }, ex => ++errors);
 
@@ -403,10 +405,12 @@ namespace UniMob.Tests
             source.Value = -1;
             AtomScheduler.Sync();
             Assert.AreEqual(1, errors);
+            AtomAssert.That(reaction).IsNotDisposed();
 
             source.Value = 2;
             AtomScheduler.Sync();
             Assert.AreEqual(2, result);
+            AtomAssert.That(reaction).IsDisposed();
 
             source.Value = 3;
             AtomScheduler.Sync();
@@ -611,10 +615,10 @@ namespace UniMob.Tests
         [Test]
         public void SubscriptionOnDisposedAtomDoesNotLeadToActualization()
         {
-            using (var lc = Lifetime.CreateNested())
+            using (Lifetime.CreateNested(out var nestedLifetime))
             {
-                var source = Atom.Value(lc.Lifetime, 0);
-                Atom.Reaction(Lifetime, () => !lc.IsDisposed ? source.Value : 0, v => { });
+                var source = Atom.Value(nestedLifetime, 0);
+                Atom.Reaction(Lifetime, () => !nestedLifetime.IsDisposed ? source.Value : 0, v => { });
 
                 AtomScheduler.Sync();
             }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using NUnit.Framework;
 
@@ -103,9 +104,9 @@ namespace UniMob.Tests
         [Test]
         public void WhenDisposingNestedLifetime_ThenRootLifetimeSteelAlive()
         {
-            var nestedController = _controller.Lifetime.CreateNested();
+            var nestedDisposer = _controller.Lifetime.CreateNested(out var nestedLifetime);
 
-            nestedController.Dispose();
+            nestedDisposer.Dispose();
 
             Assert.IsFalse(_controller.IsDisposed);
         }
@@ -113,11 +114,11 @@ namespace UniMob.Tests
         [Test]
         public void WhenDisposingRootLifetime_AndNestedCreated_ThenNestedLifetimeDisposed()
         {
-            var nestedController = _controller.Lifetime.CreateNested();
+            _controller.Lifetime.CreateNested(out var nestedLifetime);
 
             _controller.Dispose();
 
-            Assert.IsTrue(nestedController.IsDisposed);
+            Assert.IsTrue(nestedLifetime.IsDisposed);
         }
 
         [Test]
@@ -163,6 +164,92 @@ namespace UniMob.Tests
             CancellationToken token = Lifetime.Terminated;
 
             Assert.IsTrue(token.IsCancellationRequested);
+        }
+
+        [Test]
+        public void AllocateRegistrationTest()
+        {
+            Core.ArrayPool<object>.ClearCache();
+
+            using (_controller.Lifetime.CreateNested(out var nested))
+            {
+                nested.Register(() => { });
+            }
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
+
+            Assert.AreEqual(0, Core.ArrayPool<object>.GetPool(4).Count);
+        }
+
+        [Test]
+        public void GrowRegistrationTest()
+        {
+            Core.ArrayPool<object>.ClearCache();
+
+            using (_controller.Lifetime.CreateNested(out var nested))
+            {
+                nested.Register(() => { });
+                nested.Register(() => { });
+                nested.Register(() => { });
+            }
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(4).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(4), Is.All.All.Null);
+        }
+
+        [Test]
+        public void CompressRegistrationTest()
+        {
+            var action = new Action(() => { });
+
+            Core.ArrayPool<object>.ClearCache();
+
+            using (_controller.Lifetime.CreateNested(out var nested))
+            {
+                nested.Register(action);
+                nested.Register(() => { });
+                nested.UnregisterInternal(action);
+                nested.Register(() => { });
+            }
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
+
+            Assert.AreEqual(0, Core.ArrayPool<object>.GetPool(4).Count);
+        }
+
+
+        [Test]
+        public void CompressTest()
+        {
+            var action1 = new Action(() => { });
+            var action2 = new Action(() => { });
+            var action3 = new Action(() => { });
+            var action4 = new Action(() => { });
+
+            Core.ArrayPool<object>.ClearCache();
+
+            using (_controller.Lifetime.CreateNested(out var nested))
+            {
+                nested.Register(action1);
+                nested.Register(action2);
+                nested.Register(action3);
+                nested.Register(action4);
+                nested.UnregisterInternal(action1);
+                nested.UnregisterInternal(action2);
+                nested.UnregisterInternal(action3);
+                nested.Register(() => { });
+            }
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(2).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(2), Is.All.All.Null);
+
+            Assert.AreEqual(1, Core.ArrayPool<object>.GetPool(4).Count);
+            Assert.That(Core.ArrayPool<object>.GetPool(4), Is.All.All.Null);
         }
     }
 }

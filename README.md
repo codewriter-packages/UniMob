@@ -1,11 +1,23 @@
 # UniMob [![Github license](https://img.shields.io/github/license/codewriter-packages/UniMob.svg?style=flat-square)](#) [![Unity 2019.3](https://img.shields.io/badge/Unity-2019.3+-2296F3.svg?style=flat-square)](#) ![GitHub package.json version](https://img.shields.io/github/package-json/v/codewriter-packages/UniMob?style=flat-square) [![openupm](https://img.shields.io/npm/v/com.codewriter.unimob?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.codewriter.unimob/)
-_Modern reactive programming library for Unity_
 
-## Influences
+UniMob is a library that makes state management simple and scalable by transparently applying functional reactive programming. The philosophy behind UniMob is very simple:
+
+> _Anything that can be derived from the application state, should be derived. Automatically._
+
+<hr/>
+
+:small_blue_diamond: **Long lived.** More than five years of development and support<br/>
+:small_blue_diamond: **Battle tested.** Used in games with millions of players<br/>
+:small_blue_diamond: **Modern.** Based on the latest trends<br/>
+:small_blue_diamond: **Open Source.** Can be used for free in any project<br/>
+
+<hr/>
+
+## :bulb: Influences
 
 UniMob inspired by [MobX](https://github.com/mobxjs/mobx) and [$mol_atom](https://github.com/eigenmethod/mol/tree/master/atom) and adapts the principles of reactive programming for Unity.
 
-## Motivation
+## :thought_balloon: Motivation
 
 Reactive programming is good for building application logic and user interface in particular. This approach is extremely popular on the web and currently spreading in native development ([Android](https://developer.android.com/jetpack/compose/state), [iOS](https://developer.apple.com/documentation/combine/observableobject)).
 
@@ -13,7 +25,7 @@ However, there is only one implementation of reactive programming for Unity: [Un
 
 UniMob takes a different approach to building reactive streams and aims to make combining reactive streams the same as writing regular code.
 
-## A quick example
+## :rocket: A quick example
 
 So what does code that uses UniMob look like?
 
@@ -40,19 +52,11 @@ public class SampleCounter : LifetimeMonoBehaviour
 }
 ```
 
-## Introduction
-
-UniMob is a library that makes state management simple and scalable by transparently applying functional reactive programming. The philosophy behind UniMob is very simple:
-
-> _Anything that can be derived from the application state, should be derived. Automatically._
-
-which includes the UI, data serialization, server communication, etc.
-
-## Core concepts
+## :receipt: Core concepts
 
 UniMob has only a few core concepts.
 
-### Observable state
+### :label: Observable state
 
 UniMob adds observable capabilities to existing data. This can simply be done by annotating your class properties with the `[Atom]` attribute.
 
@@ -71,7 +75,7 @@ public class Todo : ILifetimeScope
 
 Using `[Atom]` is like turning a property of an object into a spreadsheet cell that when modified may cause other cells to automatically recalculate or trigger reactions. 
 
-### Computed values
+### :label: Computed values
 
 With UniMob you can define values that will be derived automatically when relevant data is modified.
 
@@ -91,7 +95,7 @@ public class TodoList : ILifetimeScope
 
 UniMob will ensure that `UnfinishedTodoCount` is updated automatically when a todo is added or when one of the finished properties is modified. Computations like these resemble formulas in spreadsheet programs like MS Excel. They update automatically and only when required.
 
-### Reactions
+###  :label:Reactions
 
 Reactions are similar to a computed value, but instead of producing a new value, a reaction produces a side effect for things like printing to the console, making network requests, updating the UniMob.UI widgets, etc. In short, reactions bridge reactive and imperative programming.
 
@@ -134,17 +138,15 @@ Atom.Reaction(Lifetime, () => {
 });
 ```
 
-### Lifetime
+> [!IMPORTANT]
+> Why does a new message get printed each time the UnfinishedTodoCount is changed? The answer is this rule of thumb:<br/>
+> **_UniMob reacts to any existing observable property that is read during the execution of a tracked function._**
+
+### :label: Lifetime
 
 UniMob handles atom lifecycle with Lifetime concept. Each atom is scoped to it's LIfetime (App Lifetime, View Lifetime, etc.). When Lifetime become disposed all scoped atoms automatically deactivates too. This allow to get rid of manual lifetime management complexity (such as Subscription pattern).
 
-### What will UniMob react to?
-
-Why does a new message get printed each time the UnfinishedTodoCount is changed? The answer is this rule of thumb:
-
-> _UniMob reacts to any existing observable property that is read during the execution of a tracked function._
-
-### Actions
+### :label: Actions
 
 UniMob is unopinionated about how user events should be handled.
 
@@ -164,12 +166,12 @@ todoList.Todos = todoList.Todos
 todoList.Todos[0].Finished = true;
 ```
 
-## How to Install
+## :open_book: How to Install
 Minimal Unity Version is 2019.3.
 
 Library distributed as git package ([How to install package from git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.html))
 <br>Git URL: `https://github.com/codewriter-packages/UniMob.git`
 
-## License
+## :green_book: License
 
 UniMob is [MIT licensed](./LICENSE.md).
