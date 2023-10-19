@@ -1,8 +1,12 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.IL2CPP.CompilerServices;
 
 namespace UniMob.Core
 {
+    [Il2CppEagerStaticClassConstruction]
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     internal static class ArrayPool<T> where T : class
     {
         internal const int PoolsCount = 30;

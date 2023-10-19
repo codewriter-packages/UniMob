@@ -9,7 +9,7 @@ namespace UniMob.Core
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     public abstract class AtomBase : IEquatable<AtomBase>, IDisposable
     {
-        public static int TrackedAtomsCount = 0;
+        public static int TrackedAtomsCount;
 
         [CanBeNull] internal static AtomBase Stack;
 
