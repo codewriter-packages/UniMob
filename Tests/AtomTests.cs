@@ -356,7 +356,7 @@ namespace UniMob.Tests
             var watch = "";
 
             var source = Atom.Value(Lifetime, 0);
-            Atom.When(Lifetime, () => source.Value > 1, () => watch += "B");
+            var reaction = Atom.When(Lifetime, () => source.Value > 1, () => watch += "B");
 
             AtomScheduler.Sync();
             Assert.AreEqual("", watch);
@@ -364,10 +364,12 @@ namespace UniMob.Tests
             source.Value = 1;
             AtomScheduler.Sync();
             Assert.AreEqual("", watch);
+            AtomAssert.That(reaction).IsNotDisposed();
 
             source.Value = 2;
             AtomScheduler.Sync();
             Assert.AreEqual("B", watch);
+            AtomAssert.That(reaction).IsDisposed();
 
             source.Value = 3;
             AtomScheduler.Sync();
@@ -385,7 +387,7 @@ namespace UniMob.Tests
 
             var nestedDisposer = Lifetime.CreateNested(out var nestedLifetime);
 
-            Atom.Reaction(nestedLifetime, () => middle.Value, value =>
+            var reaction = Atom.Reaction(nestedLifetime, () => middle.Value, value =>
             {
                 result = value;
                 if (value == 2)
@@ -403,10 +405,12 @@ namespace UniMob.Tests
             source.Value = -1;
             AtomScheduler.Sync();
             Assert.AreEqual(1, errors);
+            AtomAssert.That(reaction).IsNotDisposed();
 
             source.Value = 2;
             AtomScheduler.Sync();
             Assert.AreEqual(2, result);
+            AtomAssert.That(reaction).IsDisposed();
 
             source.Value = 3;
             AtomScheduler.Sync();
