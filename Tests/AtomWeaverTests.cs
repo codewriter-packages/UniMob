@@ -51,6 +51,8 @@ namespace UniMob.Tests
 
                 Assert.AreEqual(0, ComputedAtom<int>.GetPool().Count);
             }
+
+            Assert.AreEqual(1, ComputedAtom<int>.GetPool().Count);
         }
 
         private class TestClass : ILifetimeScope

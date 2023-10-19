@@ -30,16 +30,16 @@ namespace UniMob.Core
             comparer = EqualityComparer<T>.Default;
         }
 
-        internal void Setup(string debugName, Func<T> pull, bool keepAlive = false)
+        internal void Setup(string debugName, Func<T> pull, AtomOptions options)
         {
-            if (!options.Has(AtomOptions.Disposed))
+            if (!this.options.Has(AtomOptions.Disposed))
             {
                 throw new InvalidOperationException("Cannot reuse non disposed atom");
             }
 
             this.debugName = debugName;
             this.pull = pull ?? throw new ArgumentNullException(nameof(pull));
-            options = keepAlive ? AtomOptions.AutoActualize : AtomOptions.None;
+            this.options = options;
         }
 
         public override void Dispose()

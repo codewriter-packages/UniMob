@@ -10,23 +10,23 @@ namespace UniMob.Core
         public static ComputedAtom<T> CreatePooled<T>(ILifetimeScope scope, string debugName, Func<T> pull,
             bool keepAlive)
         {
+            var options = AtomOptions.AutoReturnToPool;
+
+            if (keepAlive)
+            {
+                options |= AtomOptions.AutoActualize;
+            }
+
             var pool = ComputedAtom<T>.GetPool();
 
             ComputedAtom<T> atom;
             if (pool.Count > 0)
             {
                 atom = pool.Pop();
-                atom.Setup(debugName, pull, keepAlive);
+                atom.Setup(debugName, pull, options);
             }
             else
             {
-                var options = AtomOptions.AutoReturnToPool;
-
-                if (keepAlive)
-                {
-                    options |= AtomOptions.AutoActualize;
-                }
-
                 atom = new ComputedAtom<T>(debugName, pull, options);
             }
 
