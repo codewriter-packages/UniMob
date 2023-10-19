@@ -1,8 +1,6 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using UniMob.Core;
-using UnityEngine.Assertions;
 
 namespace UniMob
 {
@@ -18,10 +16,11 @@ namespace UniMob
         /// <returns>Created atom.</returns>
         public static AsyncAtom<T> FromTask<T>(
             Lifetime lifetime,
-            Func<CancellationToken, Task<T>> func,
+            Func<Lifetime, Task<T>> func,
             string debugName = null)
         {
-            CancellationTokenSource cts = null;
+            NestedLifetimeDisposer? taskDisposer = null;
+            Lifetime taskLifetime = default;
             AsyncSinkAtom<T> atom = null;
 
             atom = new AsyncSinkAtom<T>(debugName, AtomAsyncValue.Loading<T>(), Load, Cancel, Reload);
@@ -35,9 +34,11 @@ namespace UniMob
 
             async void LoadAsync(bool clearValue = true)
             {
-                Assert.IsNull(cts);
+                taskDisposer?.Dispose();
+                taskDisposer = lifetime.CreateNested(out taskLifetime);
 
-                cts = new CancellationTokenSource();
+                // ReSharper disable PossibleNullReferenceException
+                // ReSharper disable AccessToModifiedClosure
 
                 try
                 {
@@ -50,7 +51,7 @@ namespace UniMob
                         atom.SetValue(AtomAsyncValue.Loading<T>());
                     }
 
-                    var task = func.Invoke(cts.Token);
+                    var task = func.Invoke(taskLifetime);
                     var result = await task;
 
                     atom.SetValue(AtomAsyncValue.Value(result));
@@ -61,16 +62,18 @@ namespace UniMob
                 }
                 finally
                 {
-                    cts.Dispose();
+                    taskDisposer?.Dispose();
+                    taskDisposer = null;
                 }
+
+                // ReSharper restore AccessToModifiedClosure
+                // ReSharper restore PossibleNullReferenceException
             }
 
             void Cancel()
             {
-                Assert.IsNotNull(cts);
-
-                cts.Dispose();
-                cts = null;
+                taskDisposer?.Dispose();
+                taskDisposer = null;
             }
 
             void Reload(bool clearValue)

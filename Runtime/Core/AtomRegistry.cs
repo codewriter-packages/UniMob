@@ -25,7 +25,7 @@ namespace UniMob.Core
 
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            if (state == PlayModeStateChange.ExitingPlayMode)
+            if (state == PlayModeStateChange.EnteredEditMode)
             {
                 foreach (var atom in Active.ToList())
                 {
