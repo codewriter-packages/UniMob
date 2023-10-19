@@ -7,8 +7,6 @@ namespace UniMob.Core
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     public class ValueAtom<T> : AtomBase, MutableAtom<T>
     {
-        internal readonly IEqualityComparer<T> comparer;
-
         internal T value;
 
         internal ValueAtom(string debugName, T value)
@@ -16,7 +14,6 @@ namespace UniMob.Core
             this.debugName = debugName;
             this.value = value;
             options = AtomOptions.None;
-            comparer = EqualityComparer<T>.Default;
         }
 
         public T Value
@@ -30,7 +27,7 @@ namespace UniMob.Core
             }
             set
             {
-                if (comparer.Equals(value, this.value))
+                if (EqualityComparer<T>.Default.Equals(value, this.value))
                 {
                     return;
                 }

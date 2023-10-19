@@ -8,7 +8,7 @@ namespace UniMob.Core
 {
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-    public class AtomScheduler : MonoBehaviour
+    public sealed class AtomScheduler : MonoBehaviour
     {
         public static readonly Stopwatch SyncTimer = new Stopwatch();
 

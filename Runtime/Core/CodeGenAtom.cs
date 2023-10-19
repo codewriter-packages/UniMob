@@ -23,11 +23,11 @@ namespace UniMob.Core
             if (pool.Count > 0)
             {
                 atom = pool.Pop();
-                atom.Setup(debugName, pull, options);
+                atom.Setup(debugName, pull, null, options);
             }
             else
             {
-                atom = new ComputedAtom<T>(debugName, pull, options);
+                atom = new ComputedAtom<T>(debugName, pull, null, options);
             }
 
             scope.Lifetime.Register(atom);
