@@ -143,8 +143,11 @@ namespace UniMob
 
         public void Dispose()
         {
-            _parent.UnregisterInternal(_child);
-            _child.Dispose();
+            if (!_child.IsDisposed)
+            {
+                _parent.UnregisterInternal(_child);
+                _child.Dispose();
+            }
 
             LifetimeController.Pool.Push(_child);
         }
