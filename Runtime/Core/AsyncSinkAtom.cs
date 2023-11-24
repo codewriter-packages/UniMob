@@ -1,3 +1,4 @@
+#if UNIMOB_EXPERIMENTAL_ASYNC_ATOM
 using System;
 using Unity.IL2CPP.CompilerServices;
 
@@ -26,3 +27,5 @@ namespace UniMob.Core
         }
     }
 }
+
+#endif
