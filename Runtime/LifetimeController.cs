@@ -67,7 +67,7 @@ namespace UniMob
             {
                 return;
             }
-            
+
             if (registrationCount > 0)
             {
                 for (var i = registrationCount - 1; i >= 0; i--)
@@ -96,7 +96,7 @@ namespace UniMob
                 registrationCount = 0;
                 ArrayPool<object>.Return(ref registrations);
             }
-            
+
             IsDisposed = true;
             hasEmptySlots = false;
             cancellationTokenSource?.Cancel();
@@ -220,6 +220,13 @@ namespace UniMob
         public static Lifetime CreateLifetime([NotNull] LifetimeController controller)
         {
             return new Lifetime(controller);
+        }
+
+        public static Lifetime CreateLifetime(CancellationToken token)
+        {
+            var lc = new LifetimeController();
+            token.Register(x => ((LifetimeController) x).Dispose(), lc, true);
+            return lc.Lifetime;
         }
     }
 }

@@ -128,6 +128,11 @@ namespace UniMob
         {
             return lifetime.Controller.ToCancellationToken();
         }
+
+        public static Lifetime FromCancellationToken(CancellationToken token)
+        {
+            return LifetimeController.CreateLifetime(token);
+        }
     }
 
     public struct NestedLifetimeDisposer : IDisposable
