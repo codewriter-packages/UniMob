@@ -1,3 +1,4 @@
+#if UNIMOB_EXPERIMENTAL_ASYNC_ATOM
 using System;
 
 namespace UniMob
@@ -65,3 +66,4 @@ namespace UniMob
         IsLoading = 1 << 1,
     }
 }
+#endif

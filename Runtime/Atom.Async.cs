@@ -1,3 +1,4 @@
+#if UNIMOB_EXPERIMENTAL_ASYNC_ATOM
 using System;
 using System.Threading.Tasks;
 using UniMob.Core;
@@ -84,3 +85,5 @@ namespace UniMob
         }
     }
 }
+
+#endif
