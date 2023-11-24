@@ -1,6 +1,9 @@
 {
     "name": "UniMob",
-    "references": [],
+    "rootNamespace": "",
+    "references": [
+        "UniTask"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
@@ -8,6 +11,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.unitask",
+            "expression": "0.0.0",
+            "define": "UNIMOB_UNITASK_INTEGRATION"
+        }
+    ],
     "noEngineReferences": false
 }
