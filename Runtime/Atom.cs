@@ -1,6 +1,7 @@
 using System;
 using JetBrains.Annotations;
 using UniMob.Core;
+using UnityEngine;
 
 namespace UniMob
 {
@@ -126,6 +127,22 @@ namespace UniMob
             var atom = new ComputedAtom<T>(debugName, pull, push, options);
             lifetime.Register(atom);
             return atom;
+        }
+
+        public static void InvalidateCurrentScope()
+        {
+            var scope = AtomBase.Stack;
+
+            if (scope == null)
+            {
+                Debug.LogError("Atom.InvalidateScope must only be executed in observable scope");
+                return;
+            }
+
+            using (Atom.NoWatch)
+            {
+                scope.Invalidate();
+            }
         }
     }
 }

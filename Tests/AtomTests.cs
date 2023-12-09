@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using UniMob.Core;
 using UnityEngine;
@@ -86,7 +87,7 @@ namespace UniMob.Tests
         public void Dispose()
         {
             Atom<int> atom;
-            using ( Lifetime.CreateNested(out var nestedLifetime))
+            using (Lifetime.CreateNested(out var nestedLifetime))
             {
                 atom = Atom.Value(nestedLifetime, 0, debugName: "DisposedAtom");
             }
@@ -669,6 +670,35 @@ namespace UniMob.Tests
             AtomScheduler.Sync();
 
             Assert.AreEqual(1, num);
+        }
+
+        [Test]
+        public void InvalidateCurrentScope()
+        {
+            var atom = Atom.Value(new List<int> {1, 2});
+            var sourceWithInvalidation = Atom.Computed(Lifetime, () =>
+            {
+                Atom.InvalidateCurrentScope();
+                return atom.Value;
+            });
+            var sourceWithRecreation = Atom.Computed(Lifetime, () => atom.Value.ToList());
+            var sourceWithoutInvalidation = Atom.Computed(Lifetime, () => atom.Value);
+
+            var resultWithInvalidation = Atom.Computed(Lifetime, () => sourceWithInvalidation.Value.Count);
+            var resultWithRecreation = Atom.Computed(Lifetime, () => sourceWithRecreation.Value.Count);
+            var resultWithoutInvalidation = Atom.Computed(Lifetime, () => sourceWithoutInvalidation.Value.Count);
+
+            Assert.AreEqual(2, resultWithInvalidation.Value);
+            Assert.AreEqual(2, resultWithRecreation.Value);
+            Assert.AreEqual(2, resultWithoutInvalidation.Value);
+
+            atom.Value.Add(3);
+            atom.Invalidate();
+            AtomScheduler.Sync();
+
+            Assert.AreEqual(2 + 1, resultWithInvalidation.Value); // updated due to InvalidateCurrentScope() call
+            Assert.AreEqual(2 + 1, resultWithRecreation.Value); // updated due to ToList() call
+            Assert.AreEqual(2, resultWithoutInvalidation.Value); // update blocked by EqualityComparer
         }
     }
 }
